@@ -101,7 +101,7 @@ length(const char* cstr)
 void
 renderText2(SDL_Color* color, SDL_Rect* msgBounds, const char* text, int ptsize = 40)
 {
-    TTF_Font* font = TTF_OpenFont("../dejavuSansMono.ttf", ptsize);
+    TTF_Font* font = TTF_OpenFont("../vera-fonts/dejavuSansMono.ttf", ptsize);
     if (font == nullptr || text == nullptr)
     {
         std::cout << "font or text was null. Exiting text rendering..";
