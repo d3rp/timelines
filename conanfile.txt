@@ -1,0 +1,7 @@
+[requires]
+bzip2/1.0.6@conan/stable
+sdl2/2.0.9@bincrafters/stable
+sdl2_ttf/2.0.15@bincrafters/stable
+
+[generators]
+cmake_paths

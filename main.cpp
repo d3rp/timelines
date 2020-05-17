@@ -1,11 +1,16 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_rect.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_timer.h>
+//#include <SDL2/SDL.h>
+//#include <SDL2/SDL_rect.h>
+//#include <SDL2/SDL_render.h>
+//#include <SDL2/SDL_timer.h>
+//#include <SDL_ttf.h>
+#include <SDL.h>
+#include <SDL_rect.h>
+#include <SDL_render.h>
+#include <SDL_timer.h>
 #include <SDL_ttf.h>
 #include <algorithm>
 #include <array>
-#include <bits/stdint-uintn.h>
+//#include <bits/stdint-uintn.h>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
@@ -24,18 +29,21 @@ const double pi = std::acos(-1);
 
 static struct Graphics
 {
-    SDL_Window*   win;
+    SDL_Window* win;
     SDL_Renderer* ren;
-    SDL_Texture*  bg;
+    SDL_Texture* bg;
 } g;
 
-
 // static const uint16_t MAX_BINS = 16384;
-static const uint16_t MAX_BINS   = 1024;
-//static const uint16_t MAX_BINS   = 4096;
-constexpr uint16_t    BINS_SPLIT = MAX_BINS / 2;
+static const uint16_t MAX_BINS = 1024;
+// static const uint16_t MAX_BINS   = 4096;
+constexpr uint16_t BINS_SPLIT = MAX_BINS / 2;
 
-inline int limit(const int min, const int max, const int value) { return std::min(max, std::max(min, value)); }
+inline int
+limit(const int min, const int max, const int value)
+{
+    return std::min(max, std::max(min, value));
+}
 
 int
 yearToIndex(int year)
@@ -56,7 +64,7 @@ struct Years
     typedef std::unique_ptr<Entity> EntityPtr;
 
     std::array<std::vector<Entity*>, MAX_BINS> bins{};
-    std::array<size_t, MAX_BINS>               year_bins{ 0 };
+    std::array<size_t, MAX_BINS> year_bins{ 0 };
 
     void insert(Entity* e)
     {
@@ -67,7 +75,7 @@ struct Years
     {
         const int id;
         IdEquals(Entity* e)
-          : id(e->id)
+            : id(e->id)
         {
         }
         bool operator()(Entity* x) const { return x->id == id; }
@@ -91,7 +99,7 @@ size_t
 length(const char* cstr)
 {
     size_t _length = 0;
-    char   c       = 'a';
+    char c = 'a';
     for (; c != 0; ++_length)
         c = cstr[_length];
 
@@ -115,8 +123,8 @@ renderText2(SDL_Color* color, SDL_Rect* msgBounds, const char* text, int ptsize 
     }
 
     const int ptsizeSmooth = ptsize / 2;
-    const int cstrL        = length(text);
-    const int cstrW        = cstrL * (ptsizeSmooth / 2);
+    const int cstrL = length(text);
+    const int cstrW = cstrL * (ptsizeSmooth / 2);
 
     SDL_Rect msgBox;
     int margins = 2 * ptsizeSmooth;
@@ -154,12 +162,12 @@ struct Timelines
 
     int assign_slots(Entity* e)
     {
-        int  slots = 1;
+        int slots = 1;
         auto split = MAX_BINS / 2;
         for (auto i = e->startYear; i < e->endYear; ++i)
         {
             auto year = years.bins[yearToIndex(i)];
-            slots     = std::max((int)slots, (int)year.size());
+            slots = std::max((int) slots, (int) year.size());
         }
 
         return slots;
@@ -191,7 +199,7 @@ struct Timelines
     }
     void renderYear(std::vector<EntityPtr>& _entities, int startYear, int endYear)
     {
-        auto maxH     = 400;
+        auto maxH = 400;
         auto interval = limit(0, MAX_BINS, endYear - startYear);
 
         std::cout << "interval: " << interval << "\n";
@@ -199,7 +207,7 @@ struct Timelines
         SDL_SetRenderDrawColor(g.ren, 0xFF, 0xFF, 0xFF, 0xFF);
 
         uint8_t entityColour = 0;
-        uint8_t colourIncr   = 255 / _entities.size();
+        uint8_t colourIncr = 255 / _entities.size();
 
         // Get max simultaneous _entities in interval
         size_t max_entities_in_interval = 0;
@@ -233,19 +241,19 @@ struct Timelines
             for (lane = 0; lane < max_entities_in_interval; ++lane)
             {
                 auto lanes_begin = std::begin(lanes) + yearToIndex(e->startYear);
-                auto lanes_end   = std::begin(lanes) + yearToIndex(e->endYear);
-                if (std::all_of(lanes_begin, lanes_end, [&](Uint8 ui) { return (bool)Uint8(1 << lane & ui); }))
+                auto lanes_end = std::begin(lanes) + yearToIndex(e->endYear);
+                if (std::all_of(lanes_begin, lanes_end, [&](Uint8 ui) { return (bool) Uint8(1 << lane & ui); }))
                 {
                     // mark lane
                     auto lanesBegin = std::begin(lanes) + yearToIndex(e->startYear);
-                    auto lanesEnd   = std::begin(lanes) + yearToIndex(e->endYear);
+                    auto lanesEnd = std::begin(lanes) + yearToIndex(e->endYear);
                     for (auto vbi = lanesBegin; vbi != lanesEnd; ++vbi)
                         *vbi = (*vbi) - (1 << lane);
                     break;
                 }
             }
 
-            const int rectEnd   = yearToIndex(std::min(e->endYear, endYear));
+            const int rectEnd = yearToIndex(std::min(e->endYear, endYear));
             const int rectStart = yearToIndex(std::max(e->startYear, startYear));
 
             const int xScale = screenW / (interval * 1.5);
@@ -317,7 +325,7 @@ graphicsInit()
         exit(2);
     }
 
-    g.win = SDL_CreateWindow("Hello World!", 0, 0, screenW, screenH, SDL_WINDOW_SHOWN);
+    g.win = SDL_CreateWindow("Timelines", 0, 0, screenW, screenH, SDL_WINDOW_SHOWN);
     if (g.win == nullptr)
     {
         std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
@@ -354,18 +362,17 @@ graphicsQuit()
     SDL_Quit();
 }
 
-
 int
 main()
 {
     graphicsInit();
 
     "Philip II of Macedon"_e | -382 | -336;
-    "Alexander the Great"_e | -356 | -323;
-    "Aristoteles"_e | -384 | -322;
-    "Plato"_e | -428 | -348;
-    "Macedonia"_e | -808 | -168;
-//    "Minna the Great"_e | -3200 | 2019;
+    //    "Alexander the Great"_e | -356 | -323;
+    //    "Aristoteles"_e | -384 | -322;
+    //    "Plato"_e | -428 | -348;
+    //    "Macedonia"_e | -808 | -168;
+    //    "Minna the Great"_e | -3200 | 2019;
 
     for (auto& e : entities)
         years.insert(e.get());

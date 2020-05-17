@@ -1,23 +1,41 @@
-SDL2, C++11 and CMake
-=====================
+Timelines
+=========
+
+WIP, Linux and Mac
 
 Requirements
 ------------
 
+* conan
 * CMake
-* Compiler that supports C++ (recent version of g++ or clang++)
+* Compiler that supports C++14 (recent version of g++ or clang++)
 * SDL2
 * ninja (or make, just drop the `-GNinja` flag and build with `make`)
 
-One way of building with C++11, SDL2, CMake and ninja
+One way of building with C++14, SDL2, CMake and ninja
 -----------------------------------------------------
 
+    # Conan installation and configuration
+    pip install conan
+    conan remote update bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+    
+    # installing dependencies (See MacOs section for troubleshooting)
     mkdir -p build
     cd build
+    conan install ..
+    
+    # CMakeLists.txt can now be used as a project in CLion or build manually
     cmake -GNinja ..
     ninja
     cd ..
     
+MacOs
+-----
+
+Might require forcing to build from source
+
+    conan install .. --build bzip2 --build libpng --build freetype --build sdl2_ttf
+
 Running
 -------
 
