@@ -15,9 +15,10 @@
 #include <memory>
 #include <random>
 #include <set>
+#include "entities.h"
 
 constexpr int screenW = 1280;
-constexpr int screenH = 768;
+constexpr int screenH = 680;
 
 const double pi = std::acos(-1);
 
@@ -28,34 +29,18 @@ static struct Graphics
     SDL_Texture*  bg;
 } g;
 
-static size_t ids = 0;
-
-struct Entity
-{
-    Entity(std::string _name, int _start, int _end)
-      : name(_name)
-      , startYear(_start)
-      , endYear(_end)
-      , id(ids++)
-    {
-        // birth before death, right?
-        assert(startYear <= endYear);
-    }
-
-    const std::string name;
-    const int         startYear;
-    const int         endYear;
-    const size_t      id;
-};
 
 // static const uint16_t MAX_BINS = 16384;
 static const uint16_t MAX_BINS   = 1024;
+//static const uint16_t MAX_BINS   = 4096;
 constexpr uint16_t    BINS_SPLIT = MAX_BINS / 2;
+
+inline int limit(const int min, const int max, const int value) { return std::min(max, std::max(min, value)); }
 
 int
 yearToIndex(int year)
 {
-    const int index = BINS_SPLIT + year;
+    const int index = limit(0, MAX_BINS - 1, BINS_SPLIT + year);
     assert(index >= 0 && index < MAX_BINS);
     return index;
 }
@@ -102,49 +87,53 @@ struct Years
     }
 } years;
 
-void
-renderText(SDL_Surface* screen)
+size_t
+length(const char* cstr)
 {
-    // Render some UTF8 text in solid black to a new surface
-    // then blit to the upper left of the screen
-    // then free the text surface
-    // SDL_Surface *screen;
-    SDL_Color color = { 0xFF, 0xFF, 0xFF };
-    auto      font  = TTF_OpenFont("Consolas", 12);
+    size_t _length = 0;
+    char   c       = 'a';
+    for (; c != 0; ++_length)
+        c = cstr[_length];
 
-    SDL_Surface* text_surface;
-    if (!(text_surface = TTF_RenderUTF8_Solid(font, "Hello World!", color)))
-    {
-        // handle error here, perhaps print TTF_GetError at least
-        std::cout << TTF_GetError << "\n";
-    }
-    else
-    {
-        SDL_BlitSurface(text_surface, NULL, screen, NULL);
-        // perhaps we can reuse it, but I assume not for simplicity.
-        SDL_FreeSurface(text_surface);
-    }
+    return _length;
 }
 
 void
-renderText2(SDL_Color* color, SDL_Rect* message_bounds, const char* text)
+renderText2(SDL_Color* color, SDL_Rect* msgBounds, const char* text, int ptsize = 40)
 {
-    TTF_Font* font = TTF_OpenFont("/home/j/.fonts/Hack-Regular.ttf", 24);
+    TTF_Font* font = TTF_OpenFont("../dejavuSansMono.ttf", ptsize);
     if (font == nullptr || text == nullptr)
     {
         std::cout << "font or text was null. Exiting text rendering..";
         return;
     }
+    SDL_Surface* msgSurface;
+    if (!(msgSurface = TTF_RenderUTF8_Solid(font, text, *color)))
+    {
+        std::cout << __PRETTY_FUNCTION__ << ": " << TTF_GetError << "\n";
+        return;
+    }
 
-    SDL_Surface* msgSurface = TTF_RenderText_Solid(font, text, *color);
+    const int ptsizeSmooth = ptsize / 2;
+    const int cstrL        = length(text);
+    const int cstrW        = cstrL * (ptsizeSmooth / 2);
+
+    SDL_Rect msgBox;
+    int margins = 2 * ptsizeSmooth;
+    int offsetMsgBoundsW = msgBounds->w + (2 * margins);
+    int offsetMsgBoundsX = msgBounds->x - offsetMsgBoundsW - margins;
+    msgBox.w = std::min(cstrW, offsetMsgBoundsW);
+    msgBox.h = ptsizeSmooth;
+    msgBox.x = msgBounds->x - margins + std::max(offsetMsgBoundsW - cstrW, 0) / 2;
+    msgBox.y = msgBounds->y + std::max(msgBounds->h - msgBox.h, 0) / 2;
+    //        SDL_BlitSurface(msgSurface, NULL, screenSurface, msgBounds);
     SDL_Texture* msgTexture = SDL_CreateTextureFromSurface(g.ren, msgSurface);
-    SDL_RenderCopy(g.ren, msgTexture, NULL, message_bounds);
+    SDL_RenderCopy(g.ren, msgTexture, NULL, &msgBox);
 
     SDL_DestroyTexture(msgTexture);
     SDL_FreeSurface(msgSurface);
 }
 
-// void all_of_skip(begin, endYear, step, value) {}
 struct Timelines
 {
     typedef std::unique_ptr<Entity> EntityPtr;
@@ -182,7 +171,7 @@ struct Timelines
         {
             if (i % 25 == 0)
             {
-                SDL_SetRenderDrawColor(g.ren, 0xFF, 0xFF, 0xFF, 0x55);
+                SDL_SetRenderDrawColor(g.ren, 0xFF, 0xFF, 0xFF, 0x10);
                 const int x = yearToIndex(i) * xScale;
                 SDL_RenderDrawLine(g.ren, x, 0, x, screenH);
 
@@ -200,26 +189,26 @@ struct Timelines
             }
         }
     }
-    void renderYear(std::vector<EntityPtr>& entities, int startYear, int endYear)
+    void renderYear(std::vector<EntityPtr>& _entities, int startYear, int endYear)
     {
         auto maxH     = 400;
-        auto interval = endYear - startYear;
+        auto interval = limit(0, MAX_BINS, endYear - startYear);
 
         std::cout << "interval: " << interval << "\n";
 
         SDL_SetRenderDrawColor(g.ren, 0xFF, 0xFF, 0xFF, 0xFF);
 
         uint8_t entityColour = 0;
-        uint8_t colourIncr   = 255 / entities.size();
+        uint8_t colourIncr   = 255 / _entities.size();
 
-        // Get max simultaneous entities in interval
+        // Get max simultaneous _entities in interval
         size_t max_entities_in_interval = 0;
         for (auto i = 0; i < interval; ++i)
             max_entities_in_interval = std::max(years.year_bins[i], max_entities_in_interval);
 
         if (max_entities_in_interval == 0)
         {
-            std::cout << "no entities in time frame..\n";
+            std::cout << "no _entities in time frame..\n";
             return;
         }
 
@@ -230,7 +219,7 @@ struct Timelines
         auto h = maxH / max_entities_in_interval;
 
         std::vector<Entity*> selectedEntities;
-        for (auto& e : entities)
+        for (auto& e : _entities)
         {
             if (e->startYear < endYear || e->endYear > startYear)
                 selectedEntities.push_back(e.get());
@@ -245,11 +234,11 @@ struct Timelines
             {
                 auto lanes_begin = std::begin(lanes) + yearToIndex(e->startYear);
                 auto lanes_end   = std::begin(lanes) + yearToIndex(e->endYear);
-                if (std::all_of(lanes_begin, lanes_end, [&](Uint8 ui) { return (bool) Uint8((1 << lane) & ui); }))
+                if (std::all_of(lanes_begin, lanes_end, [&](Uint8 ui) { return (bool)Uint8(1 << lane & ui); }))
                 {
                     // mark lane
                     auto lanesBegin = std::begin(lanes) + yearToIndex(e->startYear);
-                    auto lanesEnd = std::begin(lanes) + yearToIndex(e->endYear);
+                    auto lanesEnd   = std::begin(lanes) + yearToIndex(e->endYear);
                     for (auto vbi = lanesBegin; vbi != lanesEnd; ++vbi)
                         *vbi = (*vbi) - (1 << lane);
                     break;
@@ -263,8 +252,8 @@ struct Timelines
             drawGrid(startYear, endYear, xScale);
 
             SDL_Rect r;
-            r.x = 100 + rectStart * xScale;
-            r.y = 100 + (h * lane);
+            r.x = rectStart * xScale;
+            r.y = 10 + (h * lane);
             r.w = (rectEnd - rectStart) * xScale;
             r.h = h;
 
@@ -283,6 +272,7 @@ struct Timelines
         }
 
         SDL_RenderPresent(g.ren);
+        // TODO : probably due to scope
         SDL_Delay(50);
     }
 };
@@ -294,6 +284,7 @@ wait_for_endkey()
 
     bool isRunning = true;
 
+    SDL_Delay(50);
     while (isRunning)
     {
         SDL_PollEvent(&e);
@@ -345,7 +336,9 @@ graphicsInit()
 
     g.bg = SDL_CreateTexture(g.ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, screenW, screenH);
 
-    SDL_SetRenderDrawColor(g.ren, 0x00, 0x00, 0x00, 0x00);
+    // TODO : paint background
+    Uint8 grey = 0x30;
+    SDL_SetRenderDrawColor(g.ren, grey, grey, grey, 0xFF);
     SDL_RenderClear(g.ren);
     SDL_RenderPresent(g.ren);
 }
@@ -361,25 +354,26 @@ graphicsQuit()
     SDL_Quit();
 }
 
+
 int
 main()
 {
     graphicsInit();
 
-    {
-        std::vector<Years::EntityPtr> entities;
-        entities.push_back(std::make_unique<Entity>("Philip II of Macedon", -382, -336));
-        entities.push_back(std::make_unique<Entity>("Alexander the Great", -356, -323));
-        entities.push_back(std::make_unique<Entity>("Aristoteles", -384, -322));
-        entities.push_back(std::make_unique<Entity>("Plato", -428, -348));
-        for (auto& e : entities)
-            years.insert(e.get());
+    "Philip II of Macedon"_e | -382 | -336;
+    "Alexander the Great"_e | -356 | -323;
+    "Aristoteles"_e | -384 | -322;
+    "Plato"_e | -428 | -348;
+    "Macedonia"_e | -808 | -168;
+//    "Minna the Great"_e | -3200 | 2019;
 
-        Timelines tl;
-        tl.renderYear(entities, -430, -199);
-        SDL_RenderPresent(g.ren);
-        wait_for_endkey();
-    }
+    for (auto& e : entities)
+        years.insert(e.get());
+
+    Timelines tl;
+    tl.renderYear(entities, -430, -200);
+    SDL_RenderPresent(g.ren);
+    wait_for_endkey();
 
     graphicsQuit();
 

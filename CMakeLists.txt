@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.1)
 
 project(main)
 aux_source_directory(. SRC_LIST)
-add_executable(${PROJECT_NAME} ${SRC_LIST} dot.h)
+add_executable(${PROJECT_NAME} ${SRC_LIST} dot.h entities.h)
 
-# C++11
+# C++14
 #add_compile_options(-std=c++11) # does not work on macOS
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 

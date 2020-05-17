@@ -25,7 +25,7 @@
 # ./configure --prefix=$SDLDIR used in building SDL.
 #
 # Created by Eric Wing.  This was influenced by the FindSDL.cmake
-# module, but with modifications to recognize OS X frameworks and
+# module, but with modifications to recognize OS Entity frameworks and
 # additional Unix paths (FreeBSD, etc).
 
 #=============================================================================
