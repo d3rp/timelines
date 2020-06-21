@@ -6,6 +6,7 @@
 #include <SDL_quit.h>
 #include <SDL_render.h>
 #include <algorithm>
+#include <cmath>
 // dot
 class Dot
 {
