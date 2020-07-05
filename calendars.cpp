@@ -3,7 +3,7 @@
 int
 yearToIndex(int year)
 {
-    const int index = limit(0, MAX_BINS - 1, BINS_SPLIT + year);
+    const int index = limit((uint32_t) 0, MAX_BINS - 1, BINS_SPLIT + year);
     assert(index >= 0 && index < MAX_BINS);
     return index;
 }
@@ -39,16 +39,24 @@ Years::insert(Entity* e)
         ++year_bins[i];
 }
 
-std::set<Entity*>
-Years::getEntitiesInInterval(int start, int end)
-{
-    std::set<Entity*> v;
-    for (auto yi = start; yi < end; ++yi)
-    {
-        auto year = bins[yearToIndex(yi)];
-        for (auto* e : year)
-            v.insert(e);
-    }
+//std::set<Entity*>
+//Years::getEntitiesInInterval(int start, int end)
+//{
+//    std::set<Entity*> v;
+//    for (auto yi = start; yi < end; ++yi)
+//    {
+//        auto year = bins[yearToIndex(yi)];
+//        for (auto* e : year)
+//            v.insert(e);
+//    }
+//
+//    return v;
+//}
 
-    return v;
+void
+Years::clear()
+{
+    std::fill(year_bins.begin(), year_bins.end(), 0);
+//    for (auto& y : year_bins)
+//        y = 0;
 }

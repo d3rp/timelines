@@ -21,7 +21,6 @@
 #include "entities.h"
 #include "calendars.h"
 
-
 static struct Graphics
 {
     SDL_Window* win;
@@ -30,14 +29,14 @@ static struct Graphics
 } g;
 
 void
-renderText2(SDL_Color* color, SDL_Rect* msgBounds, const char* text, int ptsize = 40)
+renderText2(TTF_Font* font, SDL_Color* color, SDL_Rect* msgBounds, const char* text, int ptsize = 40)
 {
-    TTF_Font* font = TTF_OpenFont("../vera-fonts/dejavuSansMono.ttf", ptsize);
     if (font == nullptr || text == nullptr)
     {
-        std::cout << "font or text was null. Exiting text rendering..";
+        std::cout << "font was null. Exiting text rendering..";
         return;
     }
+
     SDL_Surface* msgSurface;
     if (!(msgSurface = TTF_RenderUTF8_Solid(font, text, *color)))
     {
@@ -71,52 +70,49 @@ clear()
     // TODO : paint background
     Uint8 grey = 0x30;
 
-    Uint8 r,gr,b,a;
+    Uint8 r, gr, b, a;
     SDL_GetRenderDrawColor(g.ren, &r, &gr, &b, &a);
     SDL_SetRenderDrawColor(g.ren, grey, grey, grey, 0xFF);
     SDL_RenderClear(g.ren);
     SDL_SetRenderDrawColor(g.ren, r, gr, b, a);
-
 }
-struct Timelines
+struct Renderer
 {
     typedef std::unique_ptr<Entity> EntityPtr;
+};
+
+struct Timelines : public Renderer
+{
 
     Timelines()
+        : fontSize(36)
+        , font{ TTF_OpenFont("../vera-fonts/dejavuSansMono.ttf", fontSize) }
     {
         std::cout << __PRETTY_FUNCTION__ << "\n";
-        SDL_SetRenderDrawColor(g.ren, 0x000, 0x00, 0x00, 0x00);
+
+        assert(font != nullptr);
+
+        SDL_SetRenderDrawColor(g.ren, 0x00, 0x00, 0x00, 0x00);
         SDL_RenderClear(g.ren);
+
+        lanes.resize(MAX_BINS);
     }
 
-    ~Timelines()
-    {
-        // SDL_SetRenderTarget(ren, NULL);
-        // SDL_RenderCopy(ren, bg, NULL, NULL);
-        // SDL_RenderPresent(ren);
-    }
+    ~Timelines() {}
 
-    int assign_slots(Entity* e)
+    void drawGrid(int startYear, int endYear, const double xScale)
     {
-        int slots = 1;
-        auto split = MAX_BINS / 2;
-        for (auto i = e->startYear; i < e->endYear; ++i)
-        {
-            auto year = Years::getInstance()->bins[yearToIndex(i)];
-            slots = std::max((int) slots, (int) year.size());
-        }
-
-        return slots;
-    }
-
-    void drawGrid(int startYear, int endYear, const int xScale)
-    {
+        int interval = endYear - startYear;
+        int splits = interval / 8.0f;
+        splits = ((int) (splits / 10.0f)) * 10;
+        splits = splits > 0 ? splits : 1;
+        auto startIndex = yearToIndex(yearRenderStart);
         for (int i = startYear; i < endYear; ++i)
         {
-            if (i % 25 == 0)
+            if (i % splits == 0)
             {
-                SDL_SetRenderDrawColor(g.ren, 0xFF, 0xFF, 0xFF, 0x10);
-                const int x = yearToIndex(i) * xScale;
+                SDL_SetRenderDrawColor(g.ren, 0x5F, 0x5F, 0x5F, 0x20);
+                const int x = (yearToIndex(i) - startIndex) * xScale;
                 SDL_RenderDrawLine(g.ren, x, 0, x, screenH);
 
                 const int labelW = 50;
@@ -128,8 +124,8 @@ struct Timelines
                 gridLabelBounds.w = labelW;
                 gridLabelBounds.h = labelH;
 
-                SDL_Color c{ 255, 255, 255 };
-                renderText2(&c, &gridLabelBounds, std::to_string(i).c_str());
+                SDL_Color c{ 255, 255, 255, 100};
+                renderText2(font, &c, &gridLabelBounds, std::to_string(i).c_str(), 28);
             }
         }
     }
@@ -145,108 +141,148 @@ struct Timelines
 
     void adjustTimeScale(Sint32 value)
     {
-        constexpr double scaleCoeff = 1e-4f;
-        timescale += limit(-0.9, 0.9, scaleCoeff * (double) value);
+        std::cout << value << "\n";
+        constexpr double scaleCoeff = 1e-2f;
+        timescale = 1.0 - limit(-0.9, 0.9, scaleCoeff * (double) value);
         const double start = yearRenderStart;
         const double mid = (yearRenderStart + yearRenderEnd) * 0.5f;
         const double end = yearRenderEnd;
-    std::cout << "ts: " << timescale << ", s: " << start << ", m: " << mid << ", e: " << end << "\n";
+        std::cout << "ts: " << timescale << ", s: " << start << ", m: " << mid << ", e: " << end << "\n";
         yearRenderStart = (int) (((start - mid) * timescale) + mid);
+        std::cout << (start - mid) * timescale << "\n";
         yearRenderEnd = (int) (((end - mid) * timescale) + mid);
         std::cout << "ts: " << timescale << ", s: " << yearRenderStart << ", e: " << yearRenderEnd << "\n";
         renderYear(Entities::getInstance()->data, yearRenderStart, yearRenderEnd);
     }
 
-    void renderYear(std::vector<EntityPtr>& _entities, int startYear, int endYear)
+    std::vector<Entity*> selectFrom(std::vector<EntityPtr>& _entities)
     {
-        std::cout << "rendering time frame [" << startYear << ", " << endYear << "]\n";
-        auto maxH = 400;
-        auto interval = limit<int>(0, MAX_BINS, endYear - startYear);
-
-//        std::cout << "interval: " << interval << "\n";
-
-
-        // Get max simultaneous _entities in interval
-        size_t max_entities_in_interval = 0;
-        for (auto i = 0; i < interval; ++i)
-            max_entities_in_interval = std::max(Years::getInstance()->year_bins[i], max_entities_in_interval);
-
-        if (max_entities_in_interval == 0)
+        std::vector<Entity*> selectedEntities;
+        Years::getInstance()->clear();
+        for (auto& e : _entities)
         {
-            std::cout << "no _entities in time frame..\n";
-            return;
+            if (e->startYear < yearRenderEnd && e->endYear > yearRenderStart)
+            {
+                selectedEntities.push_back(e.get());
+                Years::getInstance()->insert(e.get());
+            }
         }
 
-        std::vector<Uint8> lanes;
-        lanes.resize(MAX_BINS);
-        std::fill_n(lanes.begin(), MAX_BINS, std::numeric_limits<uint8_t>::max());
+        return selectedEntities;
+    }
+
+    size_t maxEntitiesInInterval(int start, int end)
+    {
+        size_t max_entities_in_interval = 0;
+        for (auto i = start; i < end; ++i)
+            max_entities_in_interval = std::max(Years::getInstance()->year_bins[yearToIndex(i)],
+                                                max_entities_in_interval);
+
+        if (max_entities_in_interval == 0)
+            std::cout << "no _entities in time frame..\n";
+
+        return max_entities_in_interval;
+    };
+
+    void renderYear(std::vector<EntityPtr>& _entities, int renderStart, int renderEnd)
+    {
+        std::cout << "rendering time frame [" << renderStart << ", " << renderEnd << "]\n";
+        assert(renderStart <= renderEnd);
+        auto maxH = screenH - 80;
+
+        //        std::cout << "interval: " << interval << "\n";
+
+        std::vector<Entity*> selectedEntities = selectFrom(_entities);
+
+        auto max_entities_in_interval = maxEntitiesInInterval(renderStart, renderEnd);
+        if (max_entities_in_interval == 0)
+            return;
 
         auto h = maxH / max_entities_in_interval;
 
-        std::vector<Entity*> selectedEntities;
-        for (auto& e : _entities)
-        {
-            if (e->startYear < endYear && e->endYear > startYear)
-                selectedEntities.push_back(e.get());
-        }
-
         clear();
+
+        assert(_entities.size() > 0);
+        Uint8 colourIncr = 255 / _entities.size();
+
+
+        auto renderStartX = yearToIndex(renderStart);
+        auto renderEndX = yearToIndex(renderEnd);
+        auto interval = limit<int>(0, MAX_BINS, renderEndX - renderStartX);
+        const double xScale = screenW / (double) interval;
+
+        std::fill(lanes.begin(), lanes.end(), std::numeric_limits<uint8_t>::max());
 
         for (auto& e : selectedEntities)
         {
-//            std::cout << "Entity found, rendering..\n";
+            //            std::cout << "Entity found, rendering..\n";
 
-            size_t lane = 0;
-            for (lane = 0; lane < max_entities_in_interval; ++lane)
-            {
-                auto lanes_begin = std::begin(lanes) + yearToIndex(e->startYear);
-                auto lanes_end = std::begin(lanes) + yearToIndex(e->endYear);
-                if (std::all_of(lanes_begin, lanes_end, [&](Uint8 ui) { return (bool) Uint8(1 << lane & ui); }))
-                {
-                    // mark lane
-                    auto lanesBegin = std::begin(lanes) + yearToIndex(e->startYear);
-                    auto lanesEnd = std::begin(lanes) + yearToIndex(e->endYear);
-                    for (auto vbi = lanesBegin; vbi != lanesEnd; ++vbi)
-                        *vbi = (*vbi) - (1 << lane);
-                    break;
-                }
-            }
+            drawGrid(renderStart, renderEnd, xScale);
 
-            const int rectEnd = yearToIndex(std::min(e->endYear, endYear));
-            const int rectStart = yearToIndex(std::max(e->startYear, startYear));
+            const int entityStartYear = e->startYear;
+            const int entityEndYear = e->endYear;
 
-            const int xScale = screenW / (interval * 1.5);
-            drawGrid(startYear, endYear, xScale);
+            auto startBound = std::max(entityStartYear, renderStart);
+            const int rectStartX = yearToIndex(startBound) - renderStartX;
+
+            auto endBound = std::min(entityEndYear, renderEnd);
+            const int rectEndX = yearToIndex(endBound) - renderStartX;
+
+            const size_t laneIndex = lane(max_entities_in_interval, entityStartYear, entityEndYear);
 
             SDL_Rect r;
-            r.x = rectStart * xScale;
-            r.y = 10 + (h * lane);
-            r.w = (rectEnd - rectStart) * xScale;
+            r.x = rectStartX * xScale;
+            r.y = 10 + (h * laneIndex);
+            r.w = (rectEndX - rectStartX) * xScale;
             r.h = h;
 
-            SDL_SetRenderDrawColor(g.ren, 0xFF, 0xFF, 0xFF, 0xFF);
 
-            uint8_t entityColour = 0;
-            assert(_entities.size() > 0);
-            uint8_t colourIncr = 255 / _entities.size();
+            const Uint8 fillColour = e->id * colourIncr;
+            const Uint8 borderColour = fillColour + colourIncr;
 
-            // outline
-            entityColour += colourIncr;
-            const Uint8 eColour = entityColour;
-            SDL_SetRenderDrawColor(g.ren, eColour, eColour, 0xFF - eColour, 0xFF);
-            SDL_RenderDrawRect(g.ren, &r);
-
-            // fill
-            SDL_SetRenderDrawColor(g.ren, eColour / 2, eColour, 0xFF - eColour, 0x50);
-            SDL_RenderFillRect(g.ren, &r);
-
-            SDL_Color color{ 255, 255, 255 };
-            renderText2(&color, &r, e->name.c_str());
+            renderEntityBox(r, e, borderColour, fillColour);
         }
 
         SDL_RenderPresent(g.ren);
         // TODO : probably due to scope
-//        SDL_Delay(50);
+        //        SDL_Delay(50);
+    }
+
+    size_t lane(size_t max_entities_in_interval, int start, int end)
+    {
+        size_t lane = 0;
+        for (lane = 0; lane < max_entities_in_interval; ++lane)
+        {
+            auto lanes_begin = std::begin(lanes) + yearToIndex(start);
+            auto lanes_end = std::begin(lanes) + yearToIndex(end);
+            if (std::all_of(lanes_begin, lanes_end, [&](Uint8 ui) { return (bool) Uint8(1 << lane & ui); }))
+            {
+                // mark lane
+                auto lanesBegin = std::begin(lanes) + yearToIndex(start);
+                auto lanesEnd = std::begin(lanes) + yearToIndex(end);
+                for (auto vbi = lanesBegin; vbi != lanesEnd; ++vbi)
+                    *vbi = (*vbi) - (1 << lane);
+                break;
+            }
+        }
+        return lane;
+    }
+
+    void renderEntityBox(SDL_Rect& r, Entity* e, uint8_t borderColour, uint8_t fillColour)
+    {
+
+        // fill
+        SDL_SetRenderDrawColor(g.ren, 0x9F - (fillColour*0.5f), 0x90 + (0xFF - fillColour) * 0.2f, 0xFF - (fillColour*0.8f), 0x70);
+        SDL_RenderFillRect(g.ren, &r);
+
+        // outline
+        SDL_SetRenderDrawColor(g.ren, 0xFF, 0xFF, 0xFF, 0x20);
+
+//        SDL_SetRenderDrawColor(g.ren, borderColour, borderColour, 0xFF - borderColour, 0xFF);
+
+        SDL_RenderDrawRect(g.ren, &r);
+        SDL_Color color{ 255, 255, 255, 0x80 };
+        renderText2(font, &color, &r, e->name.c_str(), fontSize);
     }
 
     void test()
@@ -268,8 +304,7 @@ struct Timelines
         SDL_RenderPresent(g.ren);
     }
 
-    void
-    wait_for_endkey()
+    void wait_for_endkey()
     {
         SDL_Event e;
 
@@ -278,90 +313,55 @@ struct Timelines
         SDL_Delay(500);
         while (isRunning)
         {
-//            SDL_PollEvent(&e);
-            SDL_WaitEvent(&e);
-            if (e.type == SDL_QUIT)
-                break;
-            else if (e.type == SDL_KEYDOWN)
+            while (SDL_PollEvent(&e) != 0)
             {
-                switch (e.key.keysym.sym)
+                //            SDL_PollEvent(&e);
+                //            SDL_WaitEvent(&e);
+                if (e.type == SDL_QUIT)
+                    break;
+                else if (e.type == SDL_KEYDOWN)
                 {
-                    case SDLK_q:
-                        isRunning = false;
-                        break;
+                    switch (e.key.keysym.sym)
+                    {
+                        case SDLK_q:
+                            isRunning = false;
+                            break;
+                    }
+                }
+                else if (e.type == SDL_MOUSEWHEEL)
+                {
+                    //                    if (e.wheel.y != 0 && eventTimestamp != e.wheel.timestamp)  // scroll up
+                    if (e.wheel.y != 0)
+                    {
+                        wheelEvents.push_back(e.wheel.y);
+                        //                                            std::cout << "wheel up, y: " << e.wheel.y << "\n";
+                        //                        adjustTimeScale(e.wheel.y);
+                        //                        eventTimestamp = e.wheel.timestamp;
+                    }
                 }
             }
-            else if(e.type == SDL_MOUSEWHEEL)
+            Sint32 y_delta = 0;
+            while (wheelEvents.size() > 0)
             {
-                if(e.wheel.y != 0) // scroll up
-                {
-//                    std::cout << "wheel up, y: " << e.wheel.y << "\n";
-                    adjustTimeScale(e.wheel.y);
-                }
+                y_delta += wheelEvents.back();
+                wheelEvents.pop_back();
             }
-            SDL_Delay(30);
+            if (y_delta != 0)
+                adjustTimeScale(y_delta);
+            //            SDL_Delay(30);
         }
     }
 
+    std::deque<Sint32> wheelEvents;
+    Uint32 eventTimestamp = 0;
     int yearRenderOffset = 0;
     int yearRenderStart = 0;
     int yearRenderEnd = 0;
     double timescale = 1.0f;
+    std::vector<Uint8> lanes;
+    size_t fontSize;
+    TTF_Font* font;
 };
-
-
-
-void
-graphicsInit()
-{
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-    {
-        std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    if (TTF_Init() == -1)
-    {
-        printf("TTF_Init: %s\n", TTF_GetError());
-        exit(2);
-    }
-
-    g.win = SDL_CreateWindow("Timelines", 0, 0, screenW, screenH, SDL_WINDOW_SHOWN);
-    if (g.win == nullptr)
-    {
-        std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    SDL_SetWindowFullscreen(g.win, 0);
-    SDL_ShowCursor(1);
-
-    g.ren = SDL_CreateRenderer(g.win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (g.ren == nullptr)
-    {
-        std::cout << "SDL_CreateRenderer Error" << SDL_GetError() << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    SDL_SetRenderDrawBlendMode(g.ren, SDL_BLENDMODE_BLEND);
-
-    g.bg = SDL_CreateTexture(g.ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, screenW, screenH);
-
-    // TODO : paint background
-    Uint8 grey = 0x30;
-    SDL_SetRenderDrawColor(g.ren, grey, grey, grey, 0xFF);
-    SDL_RenderClear(g.ren);
-    SDL_RenderPresent(g.ren);
-}
-
-void
-graphicsQuit()
-{
-    TTF_Quit();
-
-    SDL_DestroyTexture(g.bg);
-    SDL_DestroyRenderer(g.ren);
-    SDL_DestroyWindow(g.win);
-    SDL_Quit();
-}
 
 struct ScopedGraphics
 {
@@ -370,6 +370,56 @@ struct ScopedGraphics
      */
     ScopedGraphics() { graphicsInit(); }
     ~ScopedGraphics() { graphicsQuit(); }
+
+    void graphicsInit()
+    {
+        if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+        {
+            std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
+        if (TTF_Init() == -1)
+        {
+            printf("TTF_Init: %s\n", TTF_GetError());
+            exit(2);
+        }
+
+        g.win = SDL_CreateWindow("Timelines", 0, 0, screenW, screenH, SDL_WINDOW_SHOWN);
+        if (g.win == nullptr)
+        {
+            std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        SDL_SetWindowFullscreen(g.win, 0);
+        SDL_ShowCursor(1);
+
+        g.ren = SDL_CreateRenderer(g.win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+        if (g.ren == nullptr)
+        {
+            std::cout << "SDL_CreateRenderer Error" << SDL_GetError() << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        SDL_SetRenderDrawBlendMode(g.ren, SDL_BLENDMODE_BLEND);
+
+        g.bg = SDL_CreateTexture(g.ren, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, screenW, screenH);
+
+        // TODO : paint background
+        Uint8 grey = 0x30;
+        SDL_SetRenderDrawColor(g.ren, grey, grey, grey, 0xFF);
+        SDL_RenderClear(g.ren);
+        SDL_RenderPresent(g.ren);
+    }
+
+    void graphicsQuit()
+    {
+        TTF_Quit();
+
+        SDL_DestroyTexture(g.bg);
+        SDL_DestroyRenderer(g.ren);
+        SDL_DestroyWindow(g.win);
+        SDL_Quit();
+    }
 };
 
 struct ScopedEntities
@@ -398,6 +448,6 @@ populateEntitiesTest()
     "Macedonia"_e | -808 | -168;
     "Minna the Great"_e | -3200 | 2019;
 
-//    for (auto& e : Entities::getInstance()->data)
-//        years.insert(e.get());
+    //    for (auto& e : Entities::getInstance()->data)
+    //        years.insert(e.get());
 }

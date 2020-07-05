@@ -72,7 +72,7 @@ operator|(Entity& e, int year)
         e.properties |= Entity::property::hasEndYear;
         std::cout << "emplacing (" << e.name << ", " << e.startYear << ", " << e.endYear << ")\n";
         Entities::getInstance()->data.emplace_back(&e);
-        Years::getInstance()->insert(&e);
+//        Years::getInstance()->insert(&e);
         return e;
     }
     else if ((bool) (e.properties & Entity::property::hasEndYear))

@@ -24,7 +24,7 @@ main()
         *e | startYear | endYear;
     }
 
-    Timelines::renderYear(-430, -200);
+    Timelines::renderYear(-430, 0);
 
     return EXIT_SUCCESS;
 }

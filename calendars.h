@@ -9,6 +9,12 @@
 int yearToIndex(int year);
 int indexToYear(int index);
 
+struct TimeInterface
+{
+
+};
+struct JulianCalendar : public TimeInterface
+{};
 class Years
 {
     Years();
@@ -21,10 +27,11 @@ public:
 
     typedef std::unique_ptr<Entity> EntityPtr;
 
-    std::array<std::vector<Entity*>, MAX_BINS> bins{};
+//    std::array<std::vector<Entity*>, MAX_BINS> bins{};
     std::array<size_t, MAX_BINS> year_bins{ 0 };
 
     void insert(Entity* e);
+    void clear();
     struct IdEquals
     {
         const int id;
