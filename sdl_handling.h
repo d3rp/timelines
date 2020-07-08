@@ -139,13 +139,22 @@ struct Timelines : public Renderer
         tl.wait_for_endkey();
     }
 
-    void adjustTimeScale(Sint32 value)
+    void adjustRange(Sint32 xrel)
     {
+        float xScale = (float) (yearRenderEnd - yearRenderStart) / screenW;
+        int scaledRelativeX = xrel * xScale;
+        yearRenderStart += scaledRelativeX;
+        yearRenderEnd += scaledRelativeX;
+        renderYear(Entities::getInstance()->data, yearRenderStart, yearRenderEnd);
+    }
+    void adjustTimeScale(Sint32 value, int midX = (1440/2))
+    {
+        float midPoint = 1.0f - ((float) midX / screenW);
         std::cout << value << "\n";
         constexpr double scaleCoeff = 1e-2f;
         timescale = 1.0 - limit(-0.9, 0.9, scaleCoeff * (double) value);
         const double start = yearRenderStart;
-        const double mid = (yearRenderStart + yearRenderEnd) * 0.5f;
+        const double mid = (yearRenderStart + yearRenderEnd) * midPoint;
         const double end = yearRenderEnd;
         std::cout << "ts: " << timescale << ", s: " << start << ", m: " << mid << ", e: " << end << "\n";
         yearRenderStart = (int) (((start - mid) * timescale) + mid);
@@ -315,29 +324,32 @@ struct Timelines : public Renderer
         {
             while (SDL_PollEvent(&e) != 0)
             {
-                //            SDL_PollEvent(&e);
-                //            SDL_WaitEvent(&e);
-                if (e.type == SDL_QUIT)
-                    break;
-                else if (e.type == SDL_KEYDOWN)
+                switch (e.type)
                 {
-                    switch (e.key.keysym.sym)
-                    {
-                        case SDLK_q:
-                            isRunning = false;
-                            break;
-                    }
-                }
-                else if (e.type == SDL_MOUSEWHEEL)
-                {
-                    //                    if (e.wheel.y != 0 && eventTimestamp != e.wheel.timestamp)  // scroll up
-                    if (e.wheel.y != 0)
-                    {
-                        wheelEvents.push_back(e.wheel.y);
-                        //                                            std::cout << "wheel up, y: " << e.wheel.y << "\n";
-                        //                        adjustTimeScale(e.wheel.y);
-                        //                        eventTimestamp = e.wheel.timestamp;
-                    }
+                    case SDL_QUIT:
+                        break;
+                    case SDL_MOUSEMOTION:
+                        if (e.motion.state == 1)
+                        {
+                            adjustRange(-e.motion.xrel);
+                        }
+                        break;
+                    case SDL_KEYDOWN:
+                        switch (e.key.keysym.sym)
+                        {
+                            case SDLK_q:
+                                isRunning = false;
+                                break;
+                        }
+                        break;
+                    case SDL_MOUSEWHEEL:
+                        if (e.wheel.y != 0)
+                        {
+//                        std::cout << "mouse at (" << x << ", " << y << ")\n";
+                            wheelEvents.push_back(e.wheel.y);
+                        }
+                        break;
+
                 }
             }
             Sint32 y_delta = 0;
@@ -347,7 +359,12 @@ struct Timelines : public Renderer
                 wheelEvents.pop_back();
             }
             if (y_delta != 0)
-                adjustTimeScale(y_delta);
+            {
+
+                int x = 0, y = 0;
+                SDL_GetMouseState(&x, &y);
+                adjustTimeScale(y_delta, x);
+            }
             //            SDL_Delay(30);
         }
     }
