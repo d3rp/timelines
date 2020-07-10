@@ -5,3 +5,4 @@ sdl2_ttf/2.0.15@bincrafters/stable
 
 [generators]
 cmake_paths
+cmake

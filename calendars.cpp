@@ -1,19 +1,24 @@
 #include "calendars.h"
 
-int
-yearToIndex(int year)
+int_index_t
+yearToIndex(int_year_t year)
 {
-    const int index = limit((uint32_t) 0, MAX_BINS - 1, BINS_SPLIT + year);
+    const int_index_t index = limit<int_index_t>(0, MAX_BINS - 1, BINS_SPLIT + year);
     assert(index >= 0 && index < MAX_BINS);
     return index;
 }
-int
-indexToYear(int index)
+
+int_year_t
+indexToYear(int_index_t index)
 {
-    const int year = index - BINS_SPLIT;
+    const int_year_t year = index - BINS_SPLIT;
     return year;
 }
 
+int_year_t yearLimits(int_year_t year)
+{
+    return limit<int_year_t>(-BINS_SPLIT, MAX_BINS - BINS_SPLIT, year);
+}
 ////////////////////////////////////////////////////////////////////////////////
 
 Years* Years::instance = nullptr;

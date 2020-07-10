@@ -81,9 +81,49 @@ struct Renderer
     typedef std::unique_ptr<Entity> EntityPtr;
 };
 
+struct YearRange
+{
+    int start_ = 0;
+    int end_ = 0;
+
+    static YearRange
+    newRelativeYearRange(Sint32 xrel, YearRange* yRange, int_pixels_t relativeMax = screenW)
+    {
+        return newRelativeYearRange(xrel, yRange->start_, yRange->end_, relativeMax);
+    }
+
+    static YearRange
+    newRelativeYearRange(Sint32 xrel, int yearStart, int yearEnd, int_pixels_t relativeMax = screenW)
+    {
+        float xScale = (float) (yearEnd - yearStart) / relativeMax;
+        int scaledRelativeX = xrel * xScale;
+        return {yearStart + scaledRelativeX, yearEnd + scaledRelativeX};
+    }
+
+    static YearRange
+    newScaledYearRange(Sint32 value, YearRange* yRange, int_pixels_t midX = (screenW/2), int_pixels_t relativeMax = screenW)
+    {
+        return newScaledYearRange(value, yRange->start_, yRange->end_, midX, relativeMax);
+    }
+
+    static YearRange
+    newScaledYearRange(Sint32 value, int yearStart, int yearEnd, int midX = (screenW/2), int_pixels_t relativeMax = screenW)
+    {
+        float midPoint = 1.0f - ((float) midX / relativeMax);
+        constexpr float scaleCoeff = 1e-2f;
+        const float timescale = 1.0 - limit(-0.9f, 0.9f, scaleCoeff * (float) value);
+        const float start = yearStart;
+        const float mid = (yearStart + yearEnd) * midPoint;
+        const float end = yearEnd;
+
+        const int newStart = yearLimits((int) (((start - mid) * timescale) + mid));
+        const int newEnd = yearLimits((int) (((end - mid) * timescale) + mid));
+        return {newStart, newEnd};
+    }
+};
+
 struct Timelines : public Renderer
 {
-
     Timelines()
         : fontSize(36)
         , font{ TTF_OpenFont("../vera-fonts/dejavuSansMono.ttf", fontSize) }
@@ -100,13 +140,13 @@ struct Timelines : public Renderer
 
     ~Timelines() {}
 
-    void drawGrid(int startYear, int endYear, const double xScale)
+    void drawGrid(int startYear, int endYear, const double xScale) const
     {
         int interval = endYear - startYear;
         int splits = interval / 8.0f;
         splits = ((int) (splits / 10.0f)) * 10;
         splits = splits > 0 ? splits : 1;
-        auto startIndex = yearToIndex(yearRenderStart);
+        auto startIndex = yearToIndex(yearRange.start_);
         for (int i = startYear; i < endYear; ++i)
         {
             if (i % splits == 0)
@@ -130,47 +170,23 @@ struct Timelines : public Renderer
         }
     }
 
-    static void renderYear(const int startYear, const int endYear)
+    static void renderRange(const int startYear, const int endYear)
     {
         Timelines tl;
-        tl.yearRenderStart = startYear;
-        tl.yearRenderEnd = endYear;
-        tl.renderYear(Entities::getInstance()->data, startYear, endYear);
-        tl.wait_for_endkey();
+        tl.yearRange.start_ = startYear;
+        tl.yearRange.end_ = endYear;
+        tl.renderRange(Entities::getInstance()->data, startYear, endYear);
+        tl.handleEvents();
     }
 
-    void adjustRange(Sint32 xrel)
-    {
-        float xScale = (float) (yearRenderEnd - yearRenderStart) / screenW;
-        int scaledRelativeX = xrel * xScale;
-        yearRenderStart += scaledRelativeX;
-        yearRenderEnd += scaledRelativeX;
-        renderYear(Entities::getInstance()->data, yearRenderStart, yearRenderEnd);
-    }
-    void adjustTimeScale(Sint32 value, int midX = (1440/2))
-    {
-        float midPoint = 1.0f - ((float) midX / screenW);
-        std::cout << value << "\n";
-        constexpr double scaleCoeff = 1e-2f;
-        timescale = 1.0 - limit(-0.9, 0.9, scaleCoeff * (double) value);
-        const double start = yearRenderStart;
-        const double mid = (yearRenderStart + yearRenderEnd) * midPoint;
-        const double end = yearRenderEnd;
-        std::cout << "ts: " << timescale << ", s: " << start << ", m: " << mid << ", e: " << end << "\n";
-        yearRenderStart = (int) (((start - mid) * timescale) + mid);
-        std::cout << (start - mid) * timescale << "\n";
-        yearRenderEnd = (int) (((end - mid) * timescale) + mid);
-        std::cout << "ts: " << timescale << ", s: " << yearRenderStart << ", e: " << yearRenderEnd << "\n";
-        renderYear(Entities::getInstance()->data, yearRenderStart, yearRenderEnd);
-    }
-
-    std::vector<Entity*> selectFrom(std::vector<EntityPtr>& _entities)
+    std::vector<Entity*>
+    selectFrom(std::vector<EntityPtr>& _entities) const
     {
         std::vector<Entity*> selectedEntities;
         Years::getInstance()->clear();
         for (auto& e : _entities)
         {
-            if (e->startYear < yearRenderEnd && e->endYear > yearRenderStart)
+            if (e->startYear < yearRange.end_ && e->endYear > yearRange.start_)
             {
                 selectedEntities.push_back(e.get());
                 Years::getInstance()->insert(e.get());
@@ -180,7 +196,7 @@ struct Timelines : public Renderer
         return selectedEntities;
     }
 
-    size_t maxEntitiesInInterval(int start, int end)
+    size_t maxEntitiesInInterval(int start, int end) const
     {
         size_t max_entities_in_interval = 0;
         for (auto i = start; i < end; ++i)
@@ -193,13 +209,16 @@ struct Timelines : public Renderer
         return max_entities_in_interval;
     };
 
-    void renderYear(std::vector<EntityPtr>& _entities, int renderStart, int renderEnd)
+    void renderRange(std::vector<EntityPtr>& _entities, YearRange* yRange)
+    {
+        renderRange(_entities, yRange->start_, yRange->end_);
+    }
+
+    void renderRange(std::vector<EntityPtr>& _entities, int renderStart, int renderEnd)
     {
         std::cout << "rendering time frame [" << renderStart << ", " << renderEnd << "]\n";
         assert(renderStart <= renderEnd);
         auto maxH = screenH - 80;
-
-        //        std::cout << "interval: " << interval << "\n";
 
         std::vector<Entity*> selectedEntities = selectFrom(_entities);
 
@@ -213,7 +232,6 @@ struct Timelines : public Renderer
 
         assert(_entities.size() > 0);
         Uint8 colourIncr = 255 / _entities.size();
-
 
         auto renderStartX = yearToIndex(renderStart);
         auto renderEndX = yearToIndex(renderEnd);
@@ -237,6 +255,7 @@ struct Timelines : public Renderer
             auto endBound = std::min(entityEndYear, renderEnd);
             const int rectEndX = yearToIndex(endBound) - renderStartX;
 
+            // non const part
             const size_t laneIndex = lane(max_entities_in_interval, entityStartYear, entityEndYear);
 
             SDL_Rect r;
@@ -244,7 +263,6 @@ struct Timelines : public Renderer
             r.y = 10 + (h * laneIndex);
             r.w = (rectEndX - rectStartX) * xScale;
             r.h = h;
-
 
             const Uint8 fillColour = e->id * colourIncr;
             const Uint8 borderColour = fillColour + colourIncr;
@@ -277,17 +295,14 @@ struct Timelines : public Renderer
         return lane;
     }
 
-    void renderEntityBox(SDL_Rect& r, Entity* e, uint8_t borderColour, uint8_t fillColour)
+    void renderEntityBox(SDL_Rect& r, Entity* e, uint8_t borderColour, uint8_t fillColour) const
     {
-
         // fill
         SDL_SetRenderDrawColor(g.ren, 0x9F - (fillColour*0.5f), 0x90 + (0xFF - fillColour) * 0.2f, 0xFF - (fillColour*0.8f), 0x70);
         SDL_RenderFillRect(g.ren, &r);
 
         // outline
         SDL_SetRenderDrawColor(g.ren, 0xFF, 0xFF, 0xFF, 0x20);
-
-//        SDL_SetRenderDrawColor(g.ren, borderColour, borderColour, 0xFF - borderColour, 0xFF);
 
         SDL_RenderDrawRect(g.ren, &r);
         SDL_Color color{ 255, 255, 255, 0x80 };
@@ -313,7 +328,7 @@ struct Timelines : public Renderer
         SDL_RenderPresent(g.ren);
     }
 
-    void wait_for_endkey()
+    void handleEvents()
     {
         SDL_Event e;
 
@@ -331,7 +346,9 @@ struct Timelines : public Renderer
                     case SDL_MOUSEMOTION:
                         if (e.motion.state == 1)
                         {
-                            adjustRange(-e.motion.xrel);
+                            YearRange adjusted = YearRange::newRelativeYearRange(-e.motion.xrel, &yearRange);
+                            yearRange = adjusted;
+                            renderRange(Entities::getInstance()->data, &yearRange);
                         }
                         break;
                     case SDL_KEYDOWN:
@@ -344,10 +361,8 @@ struct Timelines : public Renderer
                         break;
                     case SDL_MOUSEWHEEL:
                         if (e.wheel.y != 0)
-                        {
-//                        std::cout << "mouse at (" << x << ", " << y << ")\n";
                             wheelEvents.push_back(e.wheel.y);
-                        }
+
                         break;
 
                 }
@@ -363,18 +378,21 @@ struct Timelines : public Renderer
 
                 int x = 0, y = 0;
                 SDL_GetMouseState(&x, &y);
-                adjustTimeScale(y_delta, x);
+                YearRange timescaled = YearRange::newScaledYearRange(y_delta, &yearRange, x);
+
+                // TODO : shift range when zooming in to keep center of zoom under the mouse pointer
+                const int midX = screenW / 2;
+                constexpr double scaleCoeff = 0.5e-2f;
+                int relativeMidPoint = (x - midX)*(y_delta*scaleCoeff);
+                YearRange ranged = YearRange::newRelativeYearRange(relativeMidPoint, &timescaled);
+                yearRange = timescaled;
+                renderRange(Entities::getInstance()->data, &yearRange);
             }
-            //            SDL_Delay(30);
         }
     }
 
+    YearRange yearRange;
     std::deque<Sint32> wheelEvents;
-    Uint32 eventTimestamp = 0;
-    int yearRenderOffset = 0;
-    int yearRenderStart = 0;
-    int yearRenderEnd = 0;
-    double timescale = 1.0f;
     std::vector<Uint8> lanes;
     size_t fontSize;
     TTF_Font* font;

@@ -1,10 +1,13 @@
 #pragma once
 
-constexpr int screenW = 1440;
-constexpr int screenH = 680;
+using int_pixels_t = uint16_t;
+constexpr int_pixels_t screenW = 1440;
+constexpr int_pixels_t screenH = 680;
 
+// Used for indices of years
+using int_index_t = uint32_t;
+using int_year_t = int;
 
-static const uint32_t MAX_BINS = 32768;
-constexpr uint32_t BINS_SPLIT = MAX_BINS / 2;
-// static const uint16_t MAX_BINS = 16384;
-// static const uint16_t MAX_BINS   = 4096;
+static const int_index_t MAX_BINS = 32768;
+//constexpr int_index_t BINS_OFFSET = 32768 - 3000;
+constexpr int_index_t BINS_SPLIT = 32768 - 3000;;

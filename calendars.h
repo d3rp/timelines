@@ -1,13 +1,16 @@
 #pragma once
 
 #include <array>
+#include <cassert>
 
 #include "globals.h"
 #include "utilities.h"
 #include "entities.h"
 
-int yearToIndex(int year);
-int indexToYear(int index);
+int_index_t yearToIndex(int_year_t year);
+int_year_t indexToYear(int_index_t index);
+int_year_t yearLimits(int_year_t year);
+
 
 struct TimeInterface
 {

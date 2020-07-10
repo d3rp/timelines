@@ -68,6 +68,10 @@ operator|(Entity& e, int year)
         // end year should be after start year
         assert(year > e.startYear);
 
+        // year should remain within set limits
+        std::cout << yearLimits(year) << "\n";
+        assert(yearLimits(year) == year);
+
         e.endYear = year;
         e.properties |= Entity::property::hasEndYear;
         std::cout << "emplacing (" << e.name << ", " << e.startYear << ", " << e.endYear << ")\n";

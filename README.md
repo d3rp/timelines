@@ -8,21 +8,24 @@ Requirements
 
 * conan
 * CMake
-* Compiler that supports C++14 (recent version of g++ or clang++)
+* Compiler that supports C++17 (recent version of g++ or clang++)
 * SDL2
 * ninja (or make, just drop the `-GNinja` flag and build with `make`)
 
-One way of building with C++14, SDL2, CMake and ninja
+One way of building with C++17, SDL2, CMake and ninja
 -----------------------------------------------------
 
     # Conan installation and configuration
     pip install conan
-    conan remote update bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+    conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
     
     # installing dependencies (See MacOs section for troubleshooting)
     mkdir -p build
     cd build
     conan install ..
+    
+    # Note: For example on Linux the conan install might throw an error of "no prebuilt" sdl2_ttf:stable
+    # In that case using `--build` will build it from source i.e. try `conan install .. --build`
     
     # CMakeLists.txt can now be used as a project in CLion or build manually
     cmake -GNinja ..
