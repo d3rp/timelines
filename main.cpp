@@ -24,7 +24,25 @@ main()
         *e | startYear | endYear;
     }
 
-    Horizontal::renderRange(-430, 0);
+    RenderingController controller;
 
+   
+    Renderer* r1 = new Horizontal();
+    r1->yearRange.start_ = -430;
+    r1->yearRange.end_ = 0;
+    r1->renderRange(Entities::getInstance()->data, &r1->yearRange);
+    controller.rendererContainer_.emplace_back(r1);
+
+    Renderer* r0 = new Vertical();
+    r0->yearRange.start_ = -430;
+    r0->yearRange.end_ = 0;
+    r0->renderRange(Entities::getInstance()->data, &r0->yearRange);
+    controller.rendererContainer_.emplace_back(r0);
+ 
+    controller.renderer_ = controller.rendererContainer_.back().get();
+
+    EventHandler evh{&controller};
+    evh.handleEvents();
+ 
     return EXIT_SUCCESS;
 }
