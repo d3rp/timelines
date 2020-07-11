@@ -122,9 +122,9 @@ struct YearRange
     }
 };
 
-struct Timelines : public Renderer
+struct Horizontal : public Renderer
 {
-    Timelines()
+    Horizontal()
         : fontSize(36)
         , font{ TTF_OpenFont("../vera-fonts/dejavuSansMono.ttf", fontSize) }
     {
@@ -138,7 +138,7 @@ struct Timelines : public Renderer
         lanes.resize(MAX_BINS);
     }
 
-    ~Timelines() {}
+    ~Horizontal() {}
 
     void drawGrid(int startYear, int endYear, const double xScale) const
     {
@@ -172,11 +172,11 @@ struct Timelines : public Renderer
 
     static void renderRange(const int startYear, const int endYear)
     {
-        Timelines tl;
-        tl.yearRange.start_ = startYear;
-        tl.yearRange.end_ = endYear;
-        tl.renderRange(Entities::getInstance()->data, startYear, endYear);
-        tl.handleEvents();
+        Horizontal renderer;
+        renderer.yearRange.start_ = startYear;
+        renderer.yearRange.end_ = endYear;
+        renderer.renderRange(Entities::getInstance()->data, startYear, endYear);
+        renderer.handleEvents();
     }
 
     std::vector<Entity*>

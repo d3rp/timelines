@@ -24,7 +24,7 @@ main()
         *e | startYear | endYear;
     }
 
-    Timelines::renderRange(-430, 0);
+    Horizontal::renderRange(-430, 0);
 
     return EXIT_SUCCESS;
 }
