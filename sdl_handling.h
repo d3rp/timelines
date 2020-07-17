@@ -9,12 +9,15 @@
 #include <random>
 #include <set>
 
+//#include <emscripten.h>
+#include <SDL_ttf.h>
+
 #include <SDL.h>
 #include <SDL_rect.h>
 #include <SDL_render.h>
 #include <SDL_timer.h>
-#include <SDL_ttf.h>
 #include <SDL_mouse.h>
+
 
 #include "globals.h"
 #include "utilities.h"
@@ -27,6 +30,7 @@ static struct Graphics
     SDL_Renderer* ren;
     SDL_Texture* bg;
 } g;
+
 void
 renderText(TTF_Font* font, SDL_Color* color, SDL_Rect* msgBounds, const char* text, int ptsize = 40)
 {
@@ -445,15 +449,16 @@ struct Vertical : public Renderer
             // non const part
             const size_t laneIndex = lane(max_entities_in_interval, entityStartYear, entityEndYear);
 
+            e->bounds.x = 10 + (w * laneIndex);
+            e->bounds.y = rectStartY * yScale;
+            e->bounds.h = (rectEndY - rectStartY) * yScale;
+            e->bounds.w = w;
+
             SDL_Rect r;
-            r.x = 10 + (w * laneIndex);
-            //r.x = rectStartX * xScale;
-            r.y = rectStartY * yScale;
-            //r.y = 10 + (h * laneIndex);
-            r.h = (rectEndY - rectStartY) * yScale;
-            //r.w = (rectEndX - rectStartX) * xScale;
-            r.w = w;
-            //r.h = h;
+            r.x = e->bounds.x;
+            r.y = e->bounds.y;
+            r.w = e->bounds.w;
+            r.h = e->bounds.h;
 
             const Uint8 fillColour = e->id * colourIncr;
             const Uint8 borderColour = fillColour + colourIncr;

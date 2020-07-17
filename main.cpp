@@ -2,6 +2,14 @@
 #include "csv/csv.h"
 #include <filesystem>
 
+//std::path projectPath()
+//{
+    //auto basepath = std::filesystem::path(std::string(SDL_GetBasePath()));
+    //auto project_path =  basepath.parent_path().parent_path();
+
+    //return project_path;
+//}
+
 int
 main()
 {

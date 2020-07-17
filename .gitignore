@@ -38,3 +38,6 @@ cmb/
 # Clion
 .idea/
 build
+
+# emscripten
+embuild

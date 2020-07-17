@@ -1,6 +1,3 @@
-//
-// Created by j on 1/17/20.
-//
 #pragma once
 
 #include <algorithm>
@@ -12,6 +9,14 @@
 
 static size_t ids = 0;
 
+struct Dimensions
+{
+    int x = 0;
+    int y = 0;
+    int w = 0;
+    int h = 0;
+};
+
 struct Entity
 {
     Entity(std::string _name);
@@ -19,7 +24,6 @@ struct Entity
     Entity(std::string _name, int _start, int _end);
 
     ~Entity();
-
 
     enum class property : unsigned
     {
@@ -34,6 +38,9 @@ struct Entity
     int startYear = 0;
     int endYear = 0;
     property properties = property::none;
+
+    Dimensions bounds;
+    Entity* parent = nullptr;
 };
 ///////////////////////////
 class Entities
