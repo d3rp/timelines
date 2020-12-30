@@ -49,6 +49,20 @@ Cleaning up the binary file and build directory
 
     rm -rf build/ main
 
+Windows
+-----------------------------------------------
+
+- install scoop
+- scoop install cmake conan
+- git clone https://github.com/ben-strasser/fast-cpp-csv-parser to csv folder
+
+Visual Studio 2019 does not respect cmake c++ standard definition (c++17), so..
+
+change the language standard in Project properties -> Configuration Properties -> C/C++ -> Language -> C++ Language Standard to at least ISO C++17 Standard (/std:c++17)
+(Can also be found in Project properties -> Configuration Properties -> General -> C++ Language Standard)
+
+https://stackoverflow.com/questions/62256738/visual-studio-2019-c-and-stdfilesystem
+
 License
 -----------------------------------------------
 

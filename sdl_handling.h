@@ -8,8 +8,12 @@
 #include <memory>
 #include <random>
 #include <set>
+#include <string>
 
 //#include <emscripten.h>
+
+#define SDL_MAIN_HANDLED
+
 #include <SDL_ttf.h>
 
 #include <SDL.h>
