@@ -39,5 +39,8 @@ cmb/
 .idea/
 build
 
+# Visual Studio
+.vs
+
 # emscripten
 embuild
