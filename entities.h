@@ -9,9 +9,9 @@
 
 
 // Windows
-#ifndef __PRETTY_FUNCTION__
-#define __PRETTY_FUNCTION__ __FUNCSIG__
-#endif
+//#ifndef __PRETTY_FUNCTION__
+//#define __PRETTY_FUNCTION__ __FUNCSIG__
+//#endif
 
 static size_t ids = 0;
 

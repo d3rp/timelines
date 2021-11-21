@@ -12,7 +12,7 @@
 
 //#include <emscripten.h>
 
-#define SDL_MAIN_HANDLED
+//#define SDL_MAIN_HANDLED
 
 #include <SDL_ttf.h>
 
@@ -222,7 +222,6 @@ struct Renderer
     }
 
     virtual ~Renderer() {}
-
     virtual void renderRange(std::vector<EntityPtr>& _entities, YearRange* yrRange) = 0;
 
     // TODO : consider other options, state in interface..
@@ -382,7 +381,7 @@ struct EventHandler
 
 TTF_Font* getTitleFont(int fontSize)
 {
-    return TTF_OpenFont("./vera-fonts/dejavuSansMono.ttf", fontSize);
+    return TTF_OpenFont("../vera-fonts/dejavuSansMono.ttf", fontSize);
 }
 
 struct Vertical : public Renderer
@@ -402,7 +401,10 @@ struct Vertical : public Renderer
         lanes.resize(MAX_BINS);
     }
 
-    ~Vertical() override {}
+    ~Vertical() override {
+        if (font != nullptr)
+            TTF_CloseFont(font);
+    }
     
     void renderRange(std::vector<EntityPtr>& _entities, YearRange* yrRange) override
     {
@@ -517,7 +519,10 @@ struct Horizontal : public Renderer
         lanes.resize(MAX_BINS);
     }
 
-    ~Horizontal() override {}
+    ~Horizontal() override {
+        if (font != nullptr)
+            TTF_CloseFont(font);
+    }
 
     void drawGrid(int startYear, int endYear, const double xScale) const
     {

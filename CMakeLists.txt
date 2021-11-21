@@ -32,8 +32,8 @@ endif()
 
 target_link_libraries(
     ${PROJECT_NAME}
-    CONAN_PKG::sdl2
-    CONAN_PKG::sdl2_ttf
+    CONAN_PKG::sdl
+    CONAN_PKG::sdl_ttf
     CONAN_PKG::cpr
     nlohmann_json::nlohmann_json
 )

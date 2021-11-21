@@ -1,6 +1,7 @@
 #include "entities.h"
 #include "calendars.h"
 
+#if 0
 #include "doctest/doctest.h"
 
 int factorial(int number) { return number <= 1 ? number : factorial(number - 1) * number; }
@@ -18,6 +19,7 @@ TEST_CASE("testing entities")
     Entity e("foo", 0, 1);
     CHECK(e.name == "foo");
 }
+#endif
 
 Entities* Entities::instance = nullptr;
 

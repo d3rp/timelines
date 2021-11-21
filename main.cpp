@@ -1,4 +1,4 @@
-#include "test_runner.h"
+//#include "test_runner.h"
 #include "sdl_handling.h"
 #include "csv/csv.h"
 
@@ -14,6 +14,7 @@
 int
 main(int argc, char** argv)
 {
+#if 0
     doctest::Context context;
 
     // !!! THIS IS JUST AN EXAMPLE SHOWING HOW DEFAULTS/OVERRIDES ARE SET !!!
@@ -34,7 +35,7 @@ main(int argc, char** argv)
         return res;          // propagate the result of the tests
 
     int client_stuff_return_code = 0;
-
+#endif
 #ifndef TESTS_ONLY
     ScopedEntities sc_e;
     ScopedGraphics sc_g;
@@ -76,7 +77,7 @@ main(int argc, char** argv)
     evh.handleEvents();
 #endif
 
-    return res + client_stuff_return_code; // the result from doctest is propagated here as well
+    //return res + client_stuff_return_code; // the result from doctest is propagated here as well
 
     //return EXIT_SUCCESS;
 }

@@ -37,9 +37,10 @@ request()
     //return j.dump();
     return j.at("Host");
 }
-
+#if 0
 TEST_CASE("testing curl functionality")
 {
     auto s = request();
     CHECK(s == "foo");
 }
+#endif
