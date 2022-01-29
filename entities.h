@@ -17,58 +17,61 @@ static size_t ids = 0;
 
 struct Dimensions
 {
-    int x = 0;
-    int y = 0;
-    int w = 0;
-    int h = 0;
+  int x = 0;
+  int y = 0;
+  int w = 0;
+  int h = 0;
 };
 
 struct Entity
 {
-    Entity(std::string _name);
+  Entity(std::string _name);
 
-    Entity(std::string _name, int _start, int _end);
+  Entity(std::string _name, int _start, int _end);
 
-    ~Entity();
+  ~Entity();
 
-    enum class property : unsigned
-    {
-        none = 0x0,
-        hasNameAndId = 0x1,
-        hasStartYear = 0x2,
-        hasEndYear = 0x4
-    };
+  enum class property : unsigned
+  {
+    none = 0x0,
+    hasNameAndId = 0x1,
+    hasStartYear = 0x2,
+    hasEndYear = 0x4
+  };
 
-    const std::string name;
-    const size_t id;
-    int startYear = 0;
-    int endYear = 0;
-    property properties = property::none;
+  const std::string name;
+  const size_t id;
+  int startYear = 0;
+  int endYear = 0;
+  property properties = property::none;
 
-    Dimensions bounds;
-    Entity* parent = nullptr;
+  Dimensions bounds;
+  Entity* parent = nullptr;
 };
 ///////////////////////////
 class Entities
 {
-    Entities() {};
+  Entities(){};
 
-    static Entities* instance;
+  static Entities* instance;
 
 public:
-    ~Entities() { std::cout << "DTOR " << __PRETTY_FUNCTION__ << "\n"; }
+  ~Entities() { std::cout << "DTOR " << __PRETTY_FUNCTION__ << "\n"; }
 
-    static Entities* getInstance();
+  static Entities* getInstance();
 
-    std::vector<std::unique_ptr<Entity>> data;
+  std::vector<std::unique_ptr<Entity>> data;
 };
 
 ///////////////////////////
-Entity::property operator|(Entity::property lhs, Entity::property rhs);
+Entity::property
+operator|(Entity::property lhs, Entity::property rhs);
 
-Entity::property operator&(Entity::property lhs, Entity::property rhs);
+Entity::property
+operator&(Entity::property lhs, Entity::property rhs);
 
-Entity::property operator|=(Entity::property& lhs, Entity::property rhs);
+Entity::property
+operator|=(Entity::property& lhs, Entity::property rhs);
 
 /**
  * Creates an Entity object in the heap (new Entity) and
@@ -90,4 +93,35 @@ Entity& operator""_e(const char* text, size_t);
  * @param year
  * @return
  */
-Entity& operator|(Entity& e, int year);
+Entity&
+operator|(Entity& e, int year);
+
+struct Years;
+
+struct ScopedEntities
+{
+  /**
+   * RAII for Singleton to invoke its child objects' DTORs upon exiting
+   */
+  ScopedEntities();
+
+  ~ScopedEntities() {}
+
+  std::unique_ptr<Entities> _entities;
+  std::unique_ptr<Years> _years;
+};
+
+template<typename>
+void
+populateEntitiesTest()
+{
+  auto& philip = "Philip II of Macedon"_e | -382 | -336;
+  "Alexander the Great"_e | -356 | -323;
+  "Aristoteles"_e | -384 | -322;
+  "Plato"_e | -428 | -348;
+  "Macedonia"_e | -808 | -168;
+  "Minna the Great"_e | -3200 | 2019;
+
+  //    for (auto& e : Entities::getInstance()->data)
+  //        years.insert(e.get());
+}

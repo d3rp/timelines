@@ -112,3 +112,7 @@ operator|(Entity& e, int year)
     }
 }
 
+ScopedEntities::ScopedEntities()
+  : _entities{ Entities::getInstance() }
+  , _years{ Years::getInstance() }
+{}
