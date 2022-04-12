@@ -1,4 +1,4 @@
 #pragma once
 
 #define DOCTEST_CONFIG_IMPLEMENT
-#include "doctest/doctest.h"
+#include "details/doctest/doctest.h"

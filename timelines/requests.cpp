@@ -1,6 +1,6 @@
-#include "requests.h"
+#include "requests.hpp"
 #include <cpr/cpr.h>
-#include <nlohmann/json.hpp>
+#include "nlohmann/json.hpp"
 
 std::string
 request()

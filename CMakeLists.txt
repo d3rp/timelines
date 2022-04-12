@@ -1,11 +1,14 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.21)
 
 project(main)
-aux_source_directory(. SRC_LIST)
-add_executable(${PROJECT_NAME} ${SRC_LIST} headers.h csv/csv.h)
+aux_source_directory(timelines SRC_LIST)
+aux_source_directory(timelines/details DETAILS_SRC_LIST)
+
+add_executable(${PROJECT_NAME} ${SRC_LIST} ${DETAILS_SRC_LIST} timelines/headers.hpp timelines/details/csv/csv.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 # C++17
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++17")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

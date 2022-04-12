@@ -16,11 +16,11 @@
 
 //#define SDL_MAIN_HANDLED
 
-#include "calendars.h"
-#include "entities.h"
-#include "globals.h"
-#include "utilities.h"
-#include "time_abstractions.h"
+#include "calendars.hpp"
+#include "entities.hpp"
+#include "globals.hpp"
+#include "details/utilities.h"
+#include "time_abstractions.hpp"
 
 struct YearRange
 {

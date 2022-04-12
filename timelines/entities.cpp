@@ -1,5 +1,5 @@
-#include "entities.h"
-#include "calendars.h"
+#include "entities.hpp"
+#include "calendars.hpp"
 
 #if 0
 #include "doctest/doctest.h"

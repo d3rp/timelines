@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rendering.h"
+#include "rendering.hpp"
 
 struct EventHandler
 {

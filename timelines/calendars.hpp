@@ -3,9 +3,9 @@
 #include <array>
 #include <cassert>
 
-#include "globals.h"
-#include "utilities.h"
-#include "entities.h"
+#include "globals.hpp"
+#include "details/utilities.h"
+#include "entities.hpp"
 
 int_index_t yearToIndex(int_year_t year);
 int_year_t indexToYear(int_index_t index);

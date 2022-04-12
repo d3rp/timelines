@@ -7,9 +7,9 @@
 #include <SDL_render.h>
 #include <SDL_timer.h>
 
-#include "entities.h"
-#include "utilities.h"
-#include "time_abstractions.h"
+#include "entities.hpp"
+#include "details/utilities.h"
+#include "time_abstractions.hpp"
 
 static struct Graphics
 {
@@ -18,7 +18,7 @@ static struct Graphics
   SDL_Texture* bg;
 } g;
 
-void
+static void
 clear()
 {
   // TODO : paint background
@@ -31,12 +31,13 @@ clear()
   SDL_SetRenderDrawColor(g.ren, r, gr, b, a);
 }
 
-TTF_Font*
+static TTF_Font*
 getTitleFont(int fontSize)
 {
-  return TTF_OpenFont("../vera-fonts/dejavuSansMono.ttf", fontSize);
+  return TTF_OpenFont("../timelines/details/vera-fonts/dejavuSansMono.ttf", fontSize);
 }
-void
+
+static void
 renderText(TTF_Font* font,
            SDL_Color* color,
            SDL_Rect* msgBounds,
@@ -75,7 +76,7 @@ renderText(TTF_Font* font,
   SDL_FreeSurface(msgSurface);
 }
 
-void
+static void
 renderText2(TTF_Font* font,
             SDL_Color* color,
             SDL_Rect* msgBounds,

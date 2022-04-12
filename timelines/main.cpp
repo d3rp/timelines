@@ -1,9 +1,8 @@
 //#include "test_runner.h"
-#include "rendering.h"
-#include "events.h"
-#include "time_abstractions.h"
-#include "csv/csv.h"
-
+#include "rendering.hpp"
+#include "events.hpp"
+#include "time_abstractions.hpp"
+#include "details/csv/csv.h"
 
 #include <filesystem>
 //std::path projectPath()
