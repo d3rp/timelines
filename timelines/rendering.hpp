@@ -1,122 +1,14 @@
 #pragma once
-#include <SDL_ttf.h>
 
-#include <SDL.h>
-#include <SDL_mouse.h>
-#include <SDL_rect.h>
-#include <SDL_render.h>
-#include <SDL_timer.h>
-
-#include "entities.hpp"
 #include "details/utilities.h"
+#include "entities.hpp"
+#include "graphics.hpp"
 #include "time_abstractions.hpp"
 
-static struct Graphics
+class Renderer
 {
-  SDL_Window* win;
-  SDL_Renderer* ren;
-  SDL_Texture* bg;
-} g;
-
-static void
-clear()
-{
-  // TODO : paint background
-  Uint8 grey = 0x30;
-
-  Uint8 r, gr, b, a;
-  SDL_GetRenderDrawColor(g.ren, &r, &gr, &b, &a);
-  SDL_SetRenderDrawColor(g.ren, grey, grey, grey, 0xFF);
-  SDL_RenderClear(g.ren);
-  SDL_SetRenderDrawColor(g.ren, r, gr, b, a);
-}
-
-static TTF_Font*
-getTitleFont(int fontSize)
-{
-  return TTF_OpenFont("../timelines/details/vera-fonts/dejavuSansMono.ttf", fontSize);
-}
-
-static void
-renderText(TTF_Font* font,
-           SDL_Color* color,
-           SDL_Rect* msgBounds,
-           const char* text,
-           int ptsize = 40)
-{
-  if (font == nullptr || text == nullptr) {
-    std::cout << "font was null. Exiting text rendering..";
-    return;
-  }
-
-  SDL_Surface* msgSurface;
-  if (!(msgSurface = TTF_RenderUTF8_Solid(font, text, *color))) {
-    std::cout << __PRETTY_FUNCTION__ << ": " << TTF_GetError << "\n";
-    return;
-  }
-
-  const int ptsizeSmooth = ptsize / 2;
-  const int cstrL = length(text);
-  const int cstrW = cstrL * (ptsizeSmooth / 2);
-
-  SDL_Rect msgBox;
-  int margins = -1 * ptsizeSmooth;
-  int offsetMsgBoundsW = msgBounds->w + (2 * margins);
-  int offsetMsgBoundsX = msgBounds->x - offsetMsgBoundsW - margins;
-  msgBox.w = std::min(cstrW, offsetMsgBoundsW);
-  msgBox.h = ptsizeSmooth;
-  msgBox.x =
-    msgBounds->x - margins; // + std::max(offsetMsgBoundsW - cstrW, 0) / 2;
-  msgBox.y = msgBounds->y + std::max(msgBounds->h - msgBox.h, 0) / 2;
-  //        SDL_BlitSurface(msgSurface, NULL, screenSurface, msgBounds);
-  SDL_Texture* msgTexture = SDL_CreateTextureFromSurface(g.ren, msgSurface);
-  SDL_RenderCopy(g.ren, msgTexture, NULL, &msgBox);
-
-  SDL_DestroyTexture(msgTexture);
-  SDL_FreeSurface(msgSurface);
-}
-
-static void
-renderText2(TTF_Font* font,
-            SDL_Color* color,
-            SDL_Rect* msgBounds,
-            const char* text,
-            int ptsize = 40)
-{
-  if (font == nullptr || text == nullptr) {
-    std::cout << "font was null. Exiting text rendering..";
-    return;
-  }
-
-  SDL_Surface* msgSurface;
-  if (!(msgSurface = TTF_RenderUTF8_Solid(font, text, *color))) {
-    std::cout << __PRETTY_FUNCTION__ << ": " << TTF_GetError << "\n";
-    return;
-  }
-
-  const int ptsizeSmooth = ptsize / 2;
-  const int cstrL = length(text);
-  const int cstrW = cstrL * (ptsizeSmooth / 2);
-
-  SDL_Rect msgBox;
-  int margins = 2 * ptsizeSmooth;
-  int offsetMsgBoundsW = msgBounds->w + (2 * margins);
-  int offsetMsgBoundsX = msgBounds->x - offsetMsgBoundsW - margins;
-  msgBox.w = std::min(cstrW, offsetMsgBoundsW);
-  msgBox.h = ptsizeSmooth;
-  msgBox.x = msgBounds->x - margins + std::max(offsetMsgBoundsW - cstrW, 0) / 2;
-  msgBox.y = msgBounds->y + std::max(msgBounds->h - msgBox.h, 0) / 2;
-  //        SDL_BlitSurface(msgSurface, NULL, screenSurface, msgBounds);
-  SDL_Texture* msgTexture = SDL_CreateTextureFromSurface(g.ren, msgSurface);
-  SDL_RenderCopy(g.ren, msgTexture, NULL, &msgBox);
-
-  SDL_DestroyTexture(msgTexture);
-  SDL_FreeSurface(msgSurface);
-}
-
-struct Renderer
-{
-  typedef std::unique_ptr<Entity> EntityPtr;
+public:
+  using EntityPtr = std::unique_ptr<Entity>;
 
   enum class Flavour : int
   {
@@ -124,12 +16,15 @@ struct Renderer
     Vertical = 2
   };
 
-  std::vector<Entity*> selectFrom(std::vector<EntityPtr>& _entities) const
+  std::vector<Entity*>
+  selectFrom(std::vector<EntityPtr>& _entities) const
   {
     std::vector<Entity*> selectedEntities;
     Years::getInstance()->clear();
-    for (auto& e : _entities) {
-      if (e->startYear < yearRange.end_ && e->endYear > yearRange.start_) {
+    for (auto& e : _entities)
+    {
+      if (e->startYear < yearRange.end && e->endYear > yearRange.start)
+      {
         selectedEntities.push_back(e.get());
         Years::getInstance()->insert(e.get());
       }
@@ -138,29 +33,32 @@ struct Renderer
     return selectedEntities;
   }
 
-  size_t maxEntitiesInInterval(int start, int end) const
+  size_t
+  maxEntitiesInInterval(int start, int end) const
   {
     size_t max_entities_in_interval = 0;
     for (auto i = start; i < end; ++i)
       max_entities_in_interval =
-        std::max(Years::getInstance()->year_bins[yearToIndex(i)],
-                 max_entities_in_interval);
+        std::max(Years::getInstance()->year_bins[yearToIndex(i)], max_entities_in_interval);
 
     if (max_entities_in_interval == 0)
-      std::cout << "no _entities in time frame..\n";
+      std::cout << "no entities in time frame..\n";
 
     return max_entities_in_interval;
   };
 
-  size_t lane(size_t max_entities_in_interval, int start, int end)
+  size_t
+  lane(size_t max_entities_in_interval, int start, int end)
   {
     size_t lane = 0;
-    for (lane = 0; lane < max_entities_in_interval; ++lane) {
+    for (lane = 0; lane < max_entities_in_interval; ++lane)
+    {
       auto lanes_begin = std::begin(lanes) + yearToIndex(start);
       auto lanes_end = std::begin(lanes) + yearToIndex(end);
-      if (std::all_of(lanes_begin, lanes_end, [&](Uint8 ui) {
-            return (bool)Uint8(1 << lane & ui);
-          })) {
+      if (std::all_of(lanes_begin,
+                      lanes_end,
+                      [&](Uint8 ui) { return (bool)Uint8(1 << lane & ui); }))
+      {
         // mark lane
         auto lanesBegin = std::begin(lanes) + yearToIndex(start);
         auto lanesEnd = std::begin(lanes) + yearToIndex(end);
@@ -172,9 +70,10 @@ struct Renderer
     return lane;
   }
 
-  virtual ~Renderer() {}
-  virtual void renderRange(std::vector<EntityPtr>& _entities,
-                           YearRange* yrRange) = 0;
+  virtual ~Renderer() = default;
+
+  virtual void
+  renderRange(std::vector<EntityPtr>& _entities, YearRange* yrRange) = 0;
 
   // TODO : consider other options, state in interface..
   YearRange yearRange;
@@ -182,92 +81,107 @@ struct Renderer
   Flavour flavour = Flavour::Horizontal;
 };
 
-struct RenderingController
+class ThreadPool
 {
-  RenderingController() {}
+};
 
-  bool isHorizontal()
+class RenderingController
+{
+public:
+  RenderingController() = default;
+
+  bool
+  isHorizontal()
   {
     return renderer_->flavour == Renderer::Flavour::Horizontal;
   }
-  bool isVertical()
+  bool
+  isVertical()
   {
     return renderer_->flavour == Renderer::Flavour::Vertical;
   }
 
-  void yScroll(int y_delta, int x, int y)
+  void
+  yScroll(int y_delta, int x, int y)
   {
     if (renderer_ == nullptr)
       return;
 
-    if (isHorizontal()) {
+    if (isHorizontal())
+    {
       YearRange* yearRange = &renderer_->yearRange;
-      YearRange timescaled =
-        YearRange::newScaledYearRange(y_delta, yearRange, x);
+      YearRange timescaled = YearRange::newScaledYearRange(y_delta, yearRange, x);
 
       // TODO : shift range when zooming in to keep center of zoom under the
       // mouse pointer
       const int midX = screenW / 2;
       constexpr double scaleCoeff = 0.5e-2f;
       int relativeMidPoint = (x - midX) * (y_delta * scaleCoeff);
-      YearRange ranged =
-        YearRange::newRelativeYearRange(relativeMidPoint, &timescaled);
+      YearRange ranged = YearRange::newRelativeYearRange(relativeMidPoint, &timescaled);
       *yearRange = timescaled;
-      renderer_->renderRange(Entities::getInstance()->data, yearRange);
-    } else if (isVertical()) {
+      renderer_->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
+    }
+    else if (isVertical())
+    {
       YearRange* yearRange = &renderer_->yearRange;
-      YearRange timescaled =
-        YearRange::newScaledYearRange(y_delta, yearRange, y, screenH);
+      YearRange timescaled = YearRange::newScaledYearRange(y_delta, yearRange, y, screenH);
 
       // TODO : shift range when zooming in to keep center of zoom under the
       // mouse pointer
       const int midY = screenH / 2;
       constexpr double scaleCoeff = 0.5e-2f;
       int relativeMidPoint = (y - midY) * (y_delta * scaleCoeff);
-      YearRange ranged =
-        YearRange::newRelativeYearRange(relativeMidPoint, &timescaled);
+      YearRange ranged = YearRange::newRelativeYearRange(relativeMidPoint, &timescaled);
       *yearRange = timescaled;
-      renderer_->renderRange(Entities::getInstance()->data, yearRange);
+      renderer_->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
     }
   }
 
-  void buttonLeftDrag(SDL_MouseMotionEvent& e)
+  void
+  buttonLeftDrag(SDL_MouseMotionEvent& e)
   {
     if (renderer_ == nullptr)
       return;
 
-    if (isHorizontal()) {
+    if (isHorizontal())
+    {
       YearRange* yearRange = &renderer_->yearRange;
       YearRange adjusted = YearRange::newRelativeYearRange(-e.xrel, yearRange);
       *yearRange = adjusted;
-      renderer_->renderRange(Entities::getInstance()->data, yearRange);
-
-    } else if (isVertical()) {
+      renderer_->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
+    }
+    else if (isVertical())
+    {
 
       YearRange* yearRange = &renderer_->yearRange;
       YearRange adjusted = YearRange::newRelativeYearRange(-e.yrel, yearRange);
       *yearRange = adjusted;
-      renderer_->renderRange(Entities::getInstance()->data, yearRange);
+      renderer_->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
     }
   }
 
-  void toggleRenderer()
+  void
+  toggleRenderer()
   {
     toggle = !toggle;
     renderer_ = rendererContainer_[(int)toggle].get();
-    renderer_->renderRange(Entities::getInstance()->data,
+    renderer_->renderRange(EntitiesSingleton::getInstance()->data,
                            &rendererContainer_[!toggle]->yearRange);
   }
 
-  void buttonRightDrag() {}
+  void
+  buttonRightDrag()
+  {
+  }
 
   bool toggle = 1;
   std::vector<std::unique_ptr<Renderer>> rendererContainer_;
   Renderer* renderer_ = nullptr;
 };
 
-struct Vertical : public Renderer
+class Vertical : public Renderer
 {
+public:
   Vertical()
     : fontSize(36)
     , font{ getTitleFont(fontSize) }
@@ -289,15 +203,14 @@ struct Vertical : public Renderer
       TTF_CloseFont(font);
   }
 
-  void renderRange(std::vector<EntityPtr>& _entities,
-                   YearRange* yrRange) override
+  void
+  renderRange(std::vector<EntityPtr>& _entities, YearRange* yrRange) override
   {
-    renderRange(_entities, yrRange->start_, yrRange->end_);
+    renderRange(_entities, yrRange->start, yrRange->end);
   }
 
-  void renderRange(std::vector<EntityPtr>& _entities,
-                   int renderStart,
-                   int renderEnd)
+  void
+  renderRange(std::vector<EntityPtr>& _entities, int renderStart, int renderEnd)
   {
     //        std::cout << "rendering time frame [" << renderStart << ", " <<
     //        renderEnd << "]\n";
@@ -306,8 +219,7 @@ struct Vertical : public Renderer
 
     std::vector<Entity*> selectedEntities = selectFrom(_entities);
 
-    auto max_entities_in_interval =
-      maxEntitiesInInterval(renderStart, renderEnd);
+    auto max_entities_in_interval = maxEntitiesInInterval(renderStart, renderEnd);
     if (max_entities_in_interval == 0)
       return;
 
@@ -325,7 +237,8 @@ struct Vertical : public Renderer
 
     std::fill(lanes.begin(), lanes.end(), std::numeric_limits<uint8_t>::max());
 
-    for (auto& e : selectedEntities) {
+    for (auto& e : selectedEntities)
+    {
       //            std::cout << "Entity found, rendering..\n";
 
       // drawGrid(renderStart, renderEnd, xScale);
@@ -340,8 +253,7 @@ struct Vertical : public Renderer
       const int rectEndY = yearToIndex(endBound) - renderStartY;
 
       // non const part
-      const size_t laneIndex =
-        lane(max_entities_in_interval, entityStartYear, entityEndYear);
+      const size_t laneIndex = lane(max_entities_in_interval, entityStartYear, entityEndYear);
 
       e->bounds.x = 10 + (w * laneIndex);
       e->bounds.y = rectStartY * yScale;
@@ -379,10 +291,8 @@ struct Vertical : public Renderer
     //        SDL_Delay(50);
   }
 
-  void renderEntityBox(SDL_Rect& r,
-                       Entity* e,
-                       uint8_t borderColour,
-                       uint8_t fillColour) const
+  void
+  renderEntityBox(SDL_Rect& r, Entity* e, uint8_t borderColour, uint8_t fillColour) const
   {
     // outline
     SDL_SetRenderDrawColor(g.ren, 0xFF, 0xFF, 0xFF, 0x20);
@@ -401,8 +311,9 @@ struct Vertical : public Renderer
   TTF_Font* font;
 };
 
-struct Horizontal : public Renderer
+class Horizontal : public Renderer
 {
+public:
   Horizontal()
     : fontSize(36)
     , font{ getTitleFont(fontSize) }
@@ -423,15 +334,18 @@ struct Horizontal : public Renderer
       TTF_CloseFont(font);
   }
 
-  void drawGrid(int startYear, int endYear, const double xScale) const
+  void
+  drawGrid(int startYear, int endYear, const double xScale) const
   {
     int interval = endYear - startYear;
     int splits = interval / 8.0f;
     splits = ((int)(splits / 10.0f)) * 10;
     splits = splits > 0 ? splits : 1;
-    auto startIndex = yearToIndex(yearRange.start_);
-    for (int i = startYear; i < endYear; ++i) {
-      if (i % splits == 0) {
+    auto startIndex = yearToIndex(yearRange.start);
+    for (int i = startYear; i < endYear; ++i)
+    {
+      if (i % splits == 0)
+      {
         SDL_SetRenderDrawColor(g.ren, 0x5F, 0x5F, 0x5F, 0x20);
         const int x = (yearToIndex(i) - startIndex) * xScale;
         SDL_RenderDrawLine(g.ren, x, 0, x, screenH);
@@ -451,25 +365,22 @@ struct Horizontal : public Renderer
     }
   }
 
-  void renderRange(std::vector<EntityPtr>& _entities,
-                   YearRange* yrRange) override
+  void
+  renderRange(std::vector<EntityPtr>& _entities, YearRange* yrRange) override
   {
-    renderRange(_entities, yrRange->start_, yrRange->end_);
+    renderRange(_entities, yrRange->start, yrRange->end);
   }
 
-  void renderRange(std::vector<EntityPtr>& _entities,
-                   int renderStart,
-                   int renderEnd)
+  void
+  renderRange(std::vector<EntityPtr>& _entities, int renderStart, int renderEnd)
   {
-    std::cout << "rendering time frame [" << renderStart << ", " << renderEnd
-              << "]\n";
+    //    std::cout << "rendering time frame [" << renderStart << ", " << renderEnd << "]\n";
     assert(renderStart <= renderEnd);
     auto maxH = screenH - 80;
 
     std::vector<Entity*> selectedEntities = selectFrom(_entities);
 
-    auto max_entities_in_interval =
-      maxEntitiesInInterval(renderStart, renderEnd);
+    auto max_entities_in_interval = maxEntitiesInInterval(renderStart, renderEnd);
     if (max_entities_in_interval == 0)
       return;
 
@@ -487,7 +398,8 @@ struct Horizontal : public Renderer
 
     std::fill(lanes.begin(), lanes.end(), std::numeric_limits<uint8_t>::max());
 
-    for (auto& e : selectedEntities) {
+    for (auto& e : selectedEntities)
+    {
       //            std::cout << "Entity found, rendering..\n";
 
       drawGrid(renderStart, renderEnd, xScale);
@@ -502,8 +414,7 @@ struct Horizontal : public Renderer
       const int rectEndX = yearToIndex(endBound) - renderStartX;
 
       // non const part
-      const size_t laneIndex =
-        lane(max_entities_in_interval, entityStartYear, entityEndYear);
+      const size_t laneIndex = lane(max_entities_in_interval, entityStartYear, entityEndYear);
 
       SDL_Rect r;
       r.x = rectStartX * xScale;
@@ -522,10 +433,8 @@ struct Horizontal : public Renderer
     //        SDL_Delay(50);
   }
 
-  void renderEntityBox(SDL_Rect& r,
-                       Entity* e,
-                       uint8_t borderColour,
-                       uint8_t fillColour) const
+  void
+  renderEntityBox(SDL_Rect& r, Entity* e, uint8_t borderColour, uint8_t fillColour) const
   {
     // fill
     SDL_SetRenderDrawColor(g.ren,
@@ -543,7 +452,8 @@ struct Horizontal : public Renderer
     renderText2(font, &color, &r, e->name.c_str(), fontSize);
   }
 
-  void test()
+  void
+  test()
   {
     SDL_Rect r;
     r.x = 10;
@@ -565,38 +475,42 @@ struct Horizontal : public Renderer
   TTF_Font* font;
 };
 
-struct ScopedGraphics
+class ScopedGraphics
 {
+public:
   /**
    * RAII for graphics
    */
   ScopedGraphics() { graphicsInit(); }
   ~ScopedGraphics() { graphicsQuit(); }
 
-  void graphicsInit()
+  void
+  graphicsInit()
   {
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
+    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+    {
       std::cout << "SDL_Init Error: " << SDL_GetError() << std::endl;
       exit(EXIT_FAILURE);
     }
 
-    if (TTF_Init() == -1) {
+    if (TTF_Init() == -1)
+    {
       printf("TTF_Init: %s\n", TTF_GetError());
       exit(2);
     }
 
-    g.win =
-      SDL_CreateWindow("Timelines", 0, 0, screenW, screenH, SDL_WINDOW_SHOWN);
-    if (g.win == nullptr) {
+    g.win = SDL_CreateWindow("Timelines", 0, 0, screenW, screenH, SDL_WINDOW_SHOWN);
+    if (g.win == nullptr)
+    {
       std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
       exit(EXIT_FAILURE);
     }
     SDL_SetWindowFullscreen(g.win, 0);
     SDL_ShowCursor(1);
 
-    g.ren = SDL_CreateRenderer(
-      g.win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (g.ren == nullptr) {
+    g.ren = SDL_CreateRenderer(g.win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (g.ren == nullptr)
+    {
       std::cout << "SDL_CreateRenderer Error" << SDL_GetError() << std::endl;
       exit(EXIT_FAILURE);
     }
@@ -615,7 +529,8 @@ struct ScopedGraphics
     SDL_RenderPresent(g.ren);
   }
 
-  void graphicsQuit()
+  void
+  graphicsQuit()
   {
     TTF_Quit();
 

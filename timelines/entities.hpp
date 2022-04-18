@@ -7,7 +7,6 @@
 #include <utility>
 #include <vector>
 
-
 // Windows
 //#ifndef __PRETTY_FUNCTION__
 //#define __PRETTY_FUNCTION__ __FUNCSIG__
@@ -49,16 +48,17 @@ struct Entity
   Entity* parent = nullptr;
 };
 ///////////////////////////
-class Entities
+class EntitiesSingleton
 {
-  Entities(){};
+  EntitiesSingleton(){};
 
-  static Entities* instance;
+  static EntitiesSingleton* instance;
 
 public:
-  ~Entities() { std::cout << "DTOR " << __PRETTY_FUNCTION__ << "\n"; }
+  ~EntitiesSingleton() { std::cout << "DTOR " << __PRETTY_FUNCTION__ << "\n"; }
 
-  static Entities* getInstance();
+  static EntitiesSingleton*
+  getInstance();
 
   std::vector<std::unique_ptr<Entity>> data;
 };
@@ -98,17 +98,17 @@ operator|(Entity& e, int year);
 
 struct Years;
 
-struct ScopedEntities
+struct Entities
 {
   /**
    * RAII for Singleton to invoke its child objects' DTORs upon exiting
    */
-  ScopedEntities();
+  Entities();
 
-  ~ScopedEntities() {}
+  ~Entities() {}
 
-  std::unique_ptr<Entities> _entities;
-  std::unique_ptr<Years> _years;
+  std::unique_ptr<EntitiesSingleton> entities;
+  std::unique_ptr<Years> years;
 };
 
 template<typename>
@@ -122,6 +122,6 @@ populateEntitiesTest()
   "Macedonia"_e | -808 | -168;
   "Minna the Great"_e | -3200 | 2019;
 
-  //    for (auto& e : Entities::getInstance()->data)
+  //    for (auto& e : EntitiesSingleton::getInstance()->data)
   //        years.insert(e.get());
 }

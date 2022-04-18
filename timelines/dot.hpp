@@ -1,7 +1,3 @@
-//
-// Created by j on 1/13/20.
-//
-
 #pragma once
 #include <SDL_quit.h>
 #include <SDL_render.h>

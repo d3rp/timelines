@@ -39,12 +39,12 @@ main(int argc, char** argv)
     int client_stuff_return_code = 0;
 #endif
 #ifndef TESTS_ONLY
-    ScopedEntities sc_e;
+  Entities sc_e;
     ScopedGraphics sc_g;
 
     // path to csv
     auto basepath = std::filesystem::path(std::string(SDL_GetBasePath()));
-    auto project_path =  basepath.parent_path().parent_path();
+    auto project_path = basepath.parent_path().parent_path();
     auto example_csv = project_path / "example.csv";
 
     io::CSVReader<3> in(example_csv.string());
@@ -62,15 +62,15 @@ main(int argc, char** argv)
 
    
     Renderer* r1 = new Horizontal();
-    r1->yearRange.start_ = -430;
-    r1->yearRange.end_ = 0;
-    r1->renderRange(Entities::getInstance()->data, &r1->yearRange);
+    r1->yearRange.start = -430;
+    r1->yearRange.end = 0;
+    r1->renderRange(EntitiesSingleton::getInstance()->data, &r1->yearRange);
     controller.rendererContainer_.emplace_back(r1);
 
     Renderer* r0 = new Vertical();
-    r0->yearRange.start_ = -430;
-    r0->yearRange.end_ = 0;
-    r0->renderRange(Entities::getInstance()->data, &r0->yearRange);
+    r0->yearRange.start = -430;
+    r0->yearRange.end = 0;
+    r0->renderRange(EntitiesSingleton::getInstance()->data, &r0->yearRange);
     controller.rendererContainer_.emplace_back(r0);
  
     controller.renderer_ = controller.rendererContainer_.back().get();

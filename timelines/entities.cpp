@@ -21,7 +21,7 @@ TEST_CASE("testing entities")
 }
 #endif
 
-Entities* Entities::instance = nullptr;
+EntitiesSingleton* EntitiesSingleton::instance = nullptr;
 
 Entity::Entity(std::string _name)
     : name(std::move(_name))
@@ -45,11 +45,11 @@ Entity::~Entity()
     std::cout << "DTOR '" << name <<"'\n";
 }
 
-Entities*
-Entities::getInstance()
+EntitiesSingleton*
+EntitiesSingleton::getInstance()
 {
     if (instance == nullptr)
-        instance = new Entities();
+        instance = new EntitiesSingleton();
 
     return instance;
 }
@@ -95,7 +95,7 @@ operator|(Entity& e, int year)
         e.endYear = year;
         e.properties |= Entity::property::hasEndYear;
         std::cout << "emplacing (" << e.name << ", " << e.startYear << ", " << e.endYear << ")\n";
-        Entities::getInstance()->data.emplace_back(&e);
+        EntitiesSingleton::getInstance()->data.emplace_back(&e);
 //        Years::getInstance()->insert(&e);
         return e;
     }
@@ -112,7 +112,7 @@ operator|(Entity& e, int year)
     }
 }
 
-ScopedEntities::ScopedEntities()
-  : _entities{ Entities::getInstance() }
-  , _years{ Years::getInstance() }
+Entities::Entities()
+  : entities{ EntitiesSingleton::getInstance() }
+  , years{ Years::getInstance() }
 {}

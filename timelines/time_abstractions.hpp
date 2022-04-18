@@ -17,48 +17,45 @@
 //#define SDL_MAIN_HANDLED
 
 #include "calendars.hpp"
+#include "details/utilities.h"
 #include "entities.hpp"
 #include "globals.hpp"
-#include "details/utilities.h"
 #include "time_abstractions.hpp"
 
 struct YearRange
 {
-  int start_ = 0;
-  int end_ = 0;
+  int start = 0;
+  int end = 0;
 
-  static YearRange newRelativeYearRange(Sint32 xrel,
-                                        YearRange* yrRange,
-                                        int_pixels_t relativeMax = screenW)
+  static YearRange
+  newRelativeYearRange(Sint32 xrel, YearRange* yrRange, int_pixels_t relativeMax = screenW)
   {
-    return newRelativeYearRange(
-      xrel, yrRange->start_, yrRange->end_, relativeMax);
+    return newRelativeYearRange(xrel, yrRange->start, yrRange->end, relativeMax);
   }
 
-  static YearRange newRelativeYearRange(Sint32 xrel,
-                                        int yearStart,
-                                        int yearEnd,
-                                        int_pixels_t relativeMax = screenW)
+  static YearRange
+  newRelativeYearRange(Sint32 xrel, int yearStart, int yearEnd, int_pixels_t relativeMax = screenW)
   {
     float xScale = (float)(yearEnd - yearStart) / relativeMax;
     int scaledRelativeX = xrel * xScale;
     return { yearStart + scaledRelativeX, yearEnd + scaledRelativeX };
   }
 
-  static YearRange newScaledYearRange(Sint32 value,
-                                      YearRange* yrRange,
-                                      int_pixels_t midX = (screenW / 2),
-                                      int_pixels_t relativeMax = screenW)
+  static YearRange
+  newScaledYearRange(Sint32 value,
+                     YearRange* yrRange,
+                     int_pixels_t midX = (screenW / 2),
+                     int_pixels_t relativeMax = screenW)
   {
-    return newScaledYearRange(
-      value, yrRange->start_, yrRange->end_, midX, relativeMax);
+    return newScaledYearRange(value, yrRange->start, yrRange->end, midX, relativeMax);
   }
 
-  static YearRange newScaledYearRange(Sint32 value,
-                                      int yearStart,
-                                      int yearEnd,
-                                      int midX = (screenW / 2),
-                                      int_pixels_t relativeMax = screenW)
+  static YearRange
+  newScaledYearRange(Sint32 value,
+                     int yearStart,
+                     int yearEnd,
+                     int midX = (screenW / 2),
+                     int_pixels_t relativeMax = screenW)
   {
     float midPoint = 1.0f - ((float)midX / relativeMax);
     constexpr float scaleCoeff = 1e-2f;
