@@ -73,7 +73,7 @@ main(int argc, char** argv)
     r0->renderRange(EntitiesSingleton::getInstance()->data, &r0->yearRange);
     controller.rendererContainer_.emplace_back(r0);
  
-    controller.renderer_ = controller.rendererContainer_.back().get();
+    controller.renderer = controller.rendererContainer_.back().get();
 
     EventHandler evh{&controller};
     evh.handleEvents();

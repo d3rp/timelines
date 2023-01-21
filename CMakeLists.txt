@@ -15,8 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # SDL2
 #include(build/conanbuildinfo.cmake)
 #conan_basic_setup(TARGETS)
-
-
+set(CONAN_DISABLE_CHECK_COMPILER 1)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake) # Include Conan-generated file
 conan_basic_setup(TARGETS) # Introduce Conan-generated targets
 

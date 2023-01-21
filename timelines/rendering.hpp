@@ -93,23 +93,23 @@ public:
   bool
   isHorizontal()
   {
-    return renderer_->flavour == Renderer::Flavour::Horizontal;
+    return renderer->flavour == Renderer::Flavour::Horizontal;
   }
   bool
   isVertical()
   {
-    return renderer_->flavour == Renderer::Flavour::Vertical;
+    return renderer->flavour == Renderer::Flavour::Vertical;
   }
 
   void
   yScroll(int y_delta, int x, int y)
   {
-    if (renderer_ == nullptr)
+    if (renderer == nullptr)
       return;
 
     if (isHorizontal())
     {
-      YearRange* yearRange = &renderer_->yearRange;
+      YearRange* yearRange = &renderer->yearRange;
       YearRange timescaled = YearRange::newScaledYearRange(y_delta, yearRange, x);
 
       // TODO : shift range when zooming in to keep center of zoom under the
@@ -119,11 +119,11 @@ public:
       int relativeMidPoint = (x - midX) * (y_delta * scaleCoeff);
       YearRange ranged = YearRange::newRelativeYearRange(relativeMidPoint, &timescaled);
       *yearRange = timescaled;
-      renderer_->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
+      renderer->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
     }
     else if (isVertical())
     {
-      YearRange* yearRange = &renderer_->yearRange;
+      YearRange* yearRange = &renderer->yearRange;
       YearRange timescaled = YearRange::newScaledYearRange(y_delta, yearRange, y, screenH);
 
       // TODO : shift range when zooming in to keep center of zoom under the
@@ -133,30 +133,30 @@ public:
       int relativeMidPoint = (y - midY) * (y_delta * scaleCoeff);
       YearRange ranged = YearRange::newRelativeYearRange(relativeMidPoint, &timescaled);
       *yearRange = timescaled;
-      renderer_->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
+      renderer->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
     }
   }
 
   void
   buttonLeftDrag(SDL_MouseMotionEvent& e)
   {
-    if (renderer_ == nullptr)
+    if (renderer == nullptr)
       return;
 
     if (isHorizontal())
     {
-      YearRange* yearRange = &renderer_->yearRange;
+      YearRange* yearRange = &renderer->yearRange;
       YearRange adjusted = YearRange::newRelativeYearRange(-e.xrel, yearRange);
       *yearRange = adjusted;
-      renderer_->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
+      renderer->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
     }
     else if (isVertical())
     {
 
-      YearRange* yearRange = &renderer_->yearRange;
+      YearRange* yearRange = &renderer->yearRange;
       YearRange adjusted = YearRange::newRelativeYearRange(-e.yrel, yearRange);
       *yearRange = adjusted;
-      renderer_->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
+      renderer->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
     }
   }
 
@@ -164,8 +164,8 @@ public:
   toggleRenderer()
   {
     toggle = !toggle;
-    renderer_ = rendererContainer_[(int)toggle].get();
-    renderer_->renderRange(EntitiesSingleton::getInstance()->data,
+    renderer = rendererContainer_[(int)toggle].get();
+    renderer->renderRange(EntitiesSingleton::getInstance()->data,
                            &rendererContainer_[!toggle]->yearRange);
   }
 
@@ -174,9 +174,14 @@ public:
   {
   }
 
+  void paint()
+  {
+
+  }
+
   bool toggle = 1;
   std::vector<std::unique_ptr<Renderer>> rendererContainer_;
-  Renderer* renderer_ = nullptr;
+  Renderer* renderer = nullptr;
 };
 
 class Vertical : public Renderer
