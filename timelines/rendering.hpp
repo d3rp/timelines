@@ -5,6 +5,12 @@
 #include "graphics.hpp"
 #include "time_abstractions.hpp"
 
+struct MouseMove
+{
+  Sint32 x;
+  Sint32 y;
+};
+
 class Renderer
 {
 public:
@@ -138,7 +144,7 @@ public:
   }
 
   void
-  buttonLeftDrag(SDL_MouseMotionEvent& e)
+  buttonLeftDrag(MouseMove m)
   {
     if (renderer == nullptr)
       return;
@@ -146,7 +152,7 @@ public:
     if (isHorizontal())
     {
       YearRange* yearRange = &renderer->yearRange;
-      YearRange adjusted = YearRange::newRelativeYearRange(-e.xrel, yearRange);
+      YearRange adjusted = YearRange::newRelativeYearRange(-m.x, yearRange);
       *yearRange = adjusted;
       renderer->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
     }
@@ -154,7 +160,7 @@ public:
     {
 
       YearRange* yearRange = &renderer->yearRange;
-      YearRange adjusted = YearRange::newRelativeYearRange(-e.yrel, yearRange);
+      YearRange adjusted = YearRange::newRelativeYearRange(-m.y, yearRange);
       *yearRange = adjusted;
       renderer->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
     }
@@ -164,9 +170,9 @@ public:
   toggleRenderer()
   {
     toggle = !toggle;
-    renderer = rendererContainer_[(int)toggle].get();
+    renderer = rendererContainer[(int)toggle].get();
     renderer->renderRange(EntitiesSingleton::getInstance()->data,
-                           &rendererContainer_[!toggle]->yearRange);
+                          &rendererContainer[!toggle]->yearRange);
   }
 
   void
@@ -174,13 +180,13 @@ public:
   {
   }
 
-  void paint()
+  void
+  paint()
   {
-
   }
 
-  bool toggle = 1;
-  std::vector<std::unique_ptr<Renderer>> rendererContainer_;
+  bool toggle{ true };
+  std::vector<std::unique_ptr<Renderer>> rendererContainer;
   Renderer* renderer = nullptr;
 };
 
@@ -245,7 +251,6 @@ public:
     for (auto& e : selectedEntities)
     {
       //            std::cout << "Entity found, rendering..\n";
-
       // drawGrid(renderStart, renderEnd, xScale);
 
       const int entityStartYear = e->startYear;

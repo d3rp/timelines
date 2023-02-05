@@ -105,7 +105,7 @@ struct Entities
    */
   Entities();
 
-  ~Entities() {}
+  ~Entities() = default;
 
   std::unique_ptr<EntitiesSingleton> entities;
   std::unique_ptr<Years> years;

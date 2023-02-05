@@ -26,10 +26,9 @@ struct EventHandler
           case SDL_QUIT:
             break;
           case SDL_MOUSEMOTION:
-            // if (e.motion.state == (Uint32) MBUTTON::LEFT)
             if (e.motion.state == 1)
             {
-              controller->buttonLeftDrag(e.motion);
+              mouseMoveEvents.push_back({e.motion.xrel, e.motion.yrel});
             }
             else if (e.motion.state == 4)
             {
@@ -54,22 +53,36 @@ struct EventHandler
             break;
         }
       }
-      Sint32 y_delta = 0;
-      while (wheelEvents.size() > 0)
+
+      Sint32 y_scroll_delta = 0;
+      while (! wheelEvents.empty())
       {
-        y_delta += wheelEvents.back();
+        y_scroll_delta += wheelEvents.back();
         wheelEvents.pop_back();
       }
-      if (y_delta != 0)
+      if (y_scroll_delta != 0)
       {
         int x = 0, y = 0;
         SDL_GetMouseState(&x, &y);
-        controller->yScroll(y_delta, x, y);
+        controller->yScroll(y_scroll_delta, x, y);
       }
+
+      MouseMove mouse_move_delta = {0, 0};
+      while (! mouseMoveEvents.empty())
+      {
+        mouse_move_delta.x += mouseMoveEvents.back().x;
+        mouse_move_delta.y += mouseMoveEvents.back().y;
+        mouseMoveEvents.pop_back();
+      }
+      if (mouse_move_delta.x != mouse_move_delta.y != 0)
+        controller->buttonLeftDrag(mouse_move_delta);
+
     }
   }
 
+
   RenderingController* controller;
+  std::deque<MouseMove> mouseMoveEvents;
   std::deque<Sint32> wheelEvents;
   const float wheelYMult = 6.5f;
 };

@@ -39,4 +39,3 @@ target_link_libraries(
     CONAN_PKG::cpr
     nlohmann_json::nlohmann_json
 )
-#target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)

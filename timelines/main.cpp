@@ -1,16 +1,16 @@
-//#include "test_runner.h"
-#include "rendering.hpp"
-#include "events.hpp"
-#include "time_abstractions.hpp"
+// #include "test_runner.h"
 #include "details/csv/csv.h"
+#include "events.hpp"
+#include "rendering.hpp"
+#include "time_abstractions.hpp"
 
 #include <filesystem>
-//std::path projectPath()
+// std::path projectPath()
 //{
-    //auto basepath = std::filesystem::path(std::string(SDL_GetBasePath()));
-    //auto project_path =  basepath.parent_path().parent_path();
+// auto basepath = std::filesystem::path(std::string(SDL_GetBasePath()));
+// auto project_path =  basepath.parent_path().parent_path();
 
-    //return project_path;
+// return project_path;
 //}
 
 int
@@ -39,7 +39,7 @@ main(int argc, char** argv)
     int client_stuff_return_code = 0;
 #endif
 #ifndef TESTS_ONLY
-  Entities sc_e;
+    Entities sc_e;
     ScopedGraphics sc_g;
 
     // path to csv
@@ -65,21 +65,21 @@ main(int argc, char** argv)
     r1->yearRange.start = -430;
     r1->yearRange.end = 0;
     r1->renderRange(EntitiesSingleton::getInstance()->data, &r1->yearRange);
-    controller.rendererContainer_.emplace_back(r1);
+    controller.rendererContainer.emplace_back(r1);
 
     Renderer* r0 = new Vertical();
     r0->yearRange.start = -430;
     r0->yearRange.end = 0;
     r0->renderRange(EntitiesSingleton::getInstance()->data, &r0->yearRange);
-    controller.rendererContainer_.emplace_back(r0);
+    controller.rendererContainer.emplace_back(r0);
  
-    controller.renderer = controller.rendererContainer_.back().get();
+    controller.renderer = controller.rendererContainer.back().get();
 
     EventHandler evh{&controller};
     evh.handleEvents();
 #endif
 
-    //return res + client_stuff_return_code; // the result from doctest is propagated here as well
+  // return res + client_stuff_return_code; // the result from doctest is propagated here as well
 
-    //return EXIT_SUCCESS;
+  // return EXIT_SUCCESS;
 }
