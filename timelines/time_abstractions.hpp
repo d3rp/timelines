@@ -27,25 +27,23 @@ struct YearRange
   int start = 0;
   int end = 0;
 
-  static YearRange
-  newRelativeYearRange(Sint32 xrel, YearRange* yrRange, int_pixels_t relativeMax = screenW)
+  static YearRange new_relative_year_range(Sint32 xrel, YearRange* yrRange, int_pixels_t relativeMax = screen_w)
   {
     return newRelativeYearRange(xrel, yrRange->start, yrRange->end, relativeMax);
   }
 
   static YearRange
-  newRelativeYearRange(Sint32 xrel, int yearStart, int yearEnd, int_pixels_t relativeMax = screenW)
+  newRelativeYearRange(Sint32 xrel, int yearStart, int yearEnd, int_pixels_t relativeMax = screen_w)
   {
     float xScale = (float)(yearEnd - yearStart) / relativeMax;
     int scaledRelativeX = xrel * xScale;
     return { yearStart + scaledRelativeX, yearEnd + scaledRelativeX };
   }
 
-  static YearRange
-  newScaledYearRange(Sint32 value,
+  static YearRange new_scaled_year_range(Sint32 value,
                      YearRange* yrRange,
-                     int_pixels_t midX = (screenW / 2),
-                     int_pixels_t relativeMax = screenW)
+                     int_pixels_t midX = (screen_w / 2),
+                     int_pixels_t relativeMax = screen_w)
   {
     return newScaledYearRange(value, yrRange->start, yrRange->end, midX, relativeMax);
   }
@@ -54,8 +52,8 @@ struct YearRange
   newScaledYearRange(Sint32 value,
                      int yearStart,
                      int yearEnd,
-                     int midX = (screenW / 2),
-                     int_pixels_t relativeMax = screenW)
+                     int midX = (screen_w / 2),
+                     int_pixels_t relativeMax = screen_w)
   {
     float midPoint = 1.0f - ((float)midX / relativeMax);
     constexpr float scaleCoeff = 1e-2f;
@@ -64,8 +62,8 @@ struct YearRange
     const float mid = (yearStart + yearEnd) * midPoint;
     const float end = yearEnd;
 
-    const int newStart = yearLimits((int)(((start - mid) * timescale) + mid));
-    const int newEnd = yearLimits((int)(((end - mid) * timescale) + mid));
+    const int newStart = year_limits((int)(((start - mid) * timescale) + mid));
+    const int newEnd = year_limits((int)(((end - mid) * timescale) + mid));
     return { newStart, newEnd };
   }
 };

@@ -42,7 +42,7 @@ struct EventHandler
                 isRunning = false;
                 break;
               case SDLK_t:
-                controller->toggleRenderer();
+                controller->toggle_renderer();
                 break;
             }
             break;
@@ -64,7 +64,7 @@ struct EventHandler
       {
         int x = 0, y = 0;
         SDL_GetMouseState(&x, &y);
-        controller->yScroll(y_scroll_delta, x, y);
+        controller->scroll_y(y_scroll_delta, x, y);
       }
 
       MouseMove mouse_move_delta = { 0, 0 };
@@ -75,7 +75,7 @@ struct EventHandler
         mouseMoveEvents.pop_back();
       }
       if (mouse_move_delta.x != mouse_move_delta.y != 0)
-        controller->buttonLeftDrag(mouse_move_delta);
+        controller->button_left_drag(mouse_move_delta);
     }
   }
 

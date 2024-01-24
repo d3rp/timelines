@@ -1,0 +1,10 @@
+{
+  "dependencies": [
+    "zlib",
+    "bzip2",
+    "sdl2",
+    "sdl2-ttf",
+    "cpr",
+    "nlohmann-json"
+  ]
+}

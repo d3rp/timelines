@@ -1,7 +1,7 @@
 #include "calendars.hpp"
 
 int_index_t
-yearToIndex(int_year_t year)
+year_to_index(int_year_t year)
 {
     const int_index_t index = limit<int_index_t>(0, MAX_BINS - 1, BINS_SPLIT + year);
     assert(index >= 0 && index < MAX_BINS);
@@ -9,30 +9,26 @@ yearToIndex(int_year_t year)
 }
 
 int_year_t
-indexToYear(int_index_t index)
+index_to_year(int_index_t index)
 {
     const int_year_t year = index - BINS_SPLIT;
     return year;
 }
 
-int_year_t yearLimits(int_year_t year)
+int_year_t
+year_limits(int_year_t year)
 {
     return limit<int_year_t>(-BINS_SPLIT, MAX_BINS - BINS_SPLIT, year);
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-Years* Years::instance = nullptr;
-
-Years::Years() {}
 
 Years::~Years() { std::cout << "DTOR " << __PRETTY_FUNCTION__ << "\n"; }
 
-Years*
-Years::getInstance()
+Years&
+Years::instance()
 {
-    if (instance == nullptr)
-        instance = new Years();
-
+    static Years instance;
     return instance;
 }
 
@@ -40,7 +36,7 @@ Years::getInstance()
 void
 Years::insert(Entity* e)
 {
-    for (auto i = yearToIndex(e->startYear); i < yearToIndex(e->endYear); ++i)
+    for (auto i = year_to_index(e->start_year); i < year_to_index(e->end_year); ++i)
         ++year_bins[i];
 }
 
@@ -50,7 +46,7 @@ Years::insert(Entity* e)
 //    std::set<Entity*> v;
 //    for (auto yi = start; yi < end; ++yi)
 //    {
-//        auto year = bins[yearToIndex(yi)];
+//        auto year = bins[year_to_index(yi)];
 //        for (auto* e : year)
 //            v.insert(e);
 //    }

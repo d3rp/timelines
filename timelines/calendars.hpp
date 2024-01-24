@@ -3,43 +3,43 @@
 #include <array>
 #include <cassert>
 
-#include "globals.hpp"
 #include "details/utilities.h"
 #include "entities.hpp"
+#include "globals.hpp"
 
-int_index_t yearToIndex(int_year_t year);
-int_year_t indexToYear(int_index_t index);
-int_year_t yearLimits(int_year_t year);
-
+int_index_t year_to_index(int_year_t year);
+int_year_t index_to_year(int_index_t index);
+int_year_t year_limits(int_year_t year);
 
 struct TimeInterface
 {
-
 };
+
 struct JulianCalendar : public TimeInterface
-{};
+{
+};
+
 class Years
 {
-    Years();
+    Years() = default;
 
-    static Years* instance;
+  public:
+    using EntityPtr = std::unique_ptr<Entity>;
 
-public:
     ~Years();
-    static Years* getInstance();
 
-    typedef std::unique_ptr<Entity> EntityPtr;
+    static Years& instance();
 
-//    std::array<std::vector<Entity*>, MAX_BINS> bins{};
     std::array<size_t, MAX_BINS> year_bins{ 0 };
 
     void insert(Entity* e);
     void clear();
+
     struct IdEquals
     {
         const int id;
         IdEquals(Entity* e)
-            : id(e->id)
+          : id(e->id)
         {
         }
         bool operator()(Entity* x) const { return x->id == id; }

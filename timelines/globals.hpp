@@ -3,8 +3,8 @@
 #include <stdint.h>
 
 using int_pixels_t = uint16_t;
-constexpr int_pixels_t screenW = 1440;
-constexpr int_pixels_t screenH = 680;
+constexpr int_pixels_t screen_w = 1440;
+constexpr int_pixels_t screen_h = 680;
 
 // Used for indices of years
 using int_index_t = uint32_t;

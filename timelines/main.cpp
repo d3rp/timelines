@@ -62,18 +62,18 @@ main(int argc, char** argv)
 
    
     Renderer* r1 = new Horizontal();
-    r1->yearRange.start = -430;
-    r1->yearRange.end = 0;
-    r1->renderRange(EntitiesSingleton::getInstance()->data, &r1->yearRange);
-    controller.rendererContainer.emplace_back(r1);
+    r1->year_range.start = -430;
+    r1->year_range.end = 0;
+    r1->render_range(EntitiesSingleton::instance().data, &r1->year_range);
+    controller.renderer_container.emplace_back(r1);
 
     Renderer* r0 = new Vertical();
-    r0->yearRange.start = -430;
-    r0->yearRange.end = 0;
-    r0->renderRange(EntitiesSingleton::getInstance()->data, &r0->yearRange);
-    controller.rendererContainer.emplace_back(r0);
+    r0->year_range.start = -430;
+    r0->year_range.end = 0;
+    r0->render_range(EntitiesSingleton::instance().data, &r0->year_range);
+    controller.renderer_container.emplace_back(r0);
  
-    controller.renderer = controller.rendererContainer.back().get();
+    controller.renderer = controller.renderer_container.back().get();
 
     EventHandler evh{&controller};
     evh.handleEvents();

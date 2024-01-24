@@ -21,8 +21,6 @@ TEST_CASE("testing entities")
 }
 #endif
 
-EntitiesSingleton* EntitiesSingleton::instance = nullptr;
-
 Entity::Entity(std::string _name)
     : name(std::move(_name))
     , id(ids++)
@@ -32,12 +30,12 @@ Entity::Entity(std::string _name)
 
 Entity::Entity(std::string _name, int _start, int _end)
     : name(std::move(_name))
-    , startYear(_start)
-    , endYear(_end)
+    , start_year(_start)
+    , end_year(_end)
     , id(ids++)
 {
     // birth before death, right?
-    assert(startYear <= endYear);
+    assert(start_year <= end_year);
 }
 
 Entity::~Entity()
@@ -45,12 +43,10 @@ Entity::~Entity()
     std::cout << "DTOR '" << name <<"'\n";
 }
 
-EntitiesSingleton*
-EntitiesSingleton::getInstance()
+EntitiesSingleton&
+EntitiesSingleton::instance()
 {
-    if (instance == nullptr)
-        instance = new EntitiesSingleton();
-
+    static EntitiesSingleton instance;
     return instance;
 }
 
@@ -86,17 +82,17 @@ operator|(Entity& e, int year)
     if ((bool) (e.properties & Entity::property::hasStartYear))
     {
         // end year should be after start year
-        assert(year > e.startYear);
+        assert(year > e.start_year);
 
         // year should remain within set limits
-        std::cout << yearLimits(year) << "\n";
-        assert(yearLimits(year) == year);
+        std::cout << year_limits(year) << "\n";
+        assert(year_limits(year) == year);
 
-        e.endYear = year;
+        e.end_year = year;
         e.properties |= Entity::property::hasEndYear;
-        std::cout << "emplacing (" << e.name << ", " << e.startYear << ", " << e.endYear << ")\n";
-        EntitiesSingleton::getInstance()->data.emplace_back(&e);
-//        Years::getInstance()->insert(&e);
+        std::cout << "emplacing (" << e.name << ", " << e.start_year << ", " << e.end_year << ")\n";
+        EntitiesSingleton::instance().data.emplace_back(&e);
+//        Years::instance()->insert(&e);
         return e;
     }
     else if ((bool) (e.properties & Entity::property::hasEndYear))
@@ -106,13 +102,13 @@ operator|(Entity& e, int year)
     }
     else
     {
-        e.startYear = year;
+        e.start_year = year;
         e.properties |= Entity::property::hasStartYear;
         return e;
     }
 }
 
 Entities::Entities()
-  : entities{ EntitiesSingleton::getInstance() }
-  , years{ Years::getInstance() }
+  : entities{ &EntitiesSingleton::instance() }
+  , years{ &Years::instance() }
 {}

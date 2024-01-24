@@ -29,7 +29,7 @@ clear()
 }
 
 static TTF_Font*
-getTitleFont(int fontSize)
+get_title_font(int fontSize)
 {
   return TTF_OpenFont("../timelines/details/vera-fonts/dejavuSansMono.ttf", fontSize);
 }
@@ -71,7 +71,7 @@ renderText(TTF_Font* font, SDL_Color* color, SDL_Rect* msgBounds, const char* te
 }
 
 static void
-renderText2(TTF_Font* font,
+render_text_2(TTF_Font* font,
             SDL_Color* color,
             SDL_Rect* msgBounds,
             const char* text,
