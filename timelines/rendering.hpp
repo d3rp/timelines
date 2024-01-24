@@ -144,26 +144,21 @@ public:
   }
 
   void
-  buttonLeftDrag(MouseMove m)
+  buttonLeftDrag(MouseMove m, const float multiplier = 1.5f)
   {
     if (renderer == nullptr)
       return;
 
-    if (isHorizontal())
-    {
-      YearRange* yearRange = &renderer->yearRange;
-      YearRange adjusted = YearRange::newRelativeYearRange(-m.x, yearRange);
-      *yearRange = adjusted;
-      renderer->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
-    }
-    else if (isVertical())
-    {
+    const Sint32 multiplied_value =
+      isHorizontal()
+        ? ((float)-m.x) * multiplier
+        : ((float)-m.y) * multiplier;
 
-      YearRange* yearRange = &renderer->yearRange;
-      YearRange adjusted = YearRange::newRelativeYearRange(-m.y, yearRange);
-      *yearRange = adjusted;
-      renderer->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
-    }
+    YearRange* yearRange = &renderer->yearRange;
+    YearRange adjusted = YearRange::newRelativeYearRange(multiplied_value, yearRange);
+    *yearRange = adjusted;
+    std::cout << "rel.range: " << std::to_string(yearRange->start) << " - " << std::to_string(yearRange->end) << "\n";
+    renderer->renderRange(EntitiesSingleton::getInstance()->data, yearRange);
   }
 
   void

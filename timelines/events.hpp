@@ -28,7 +28,7 @@ struct EventHandler
           case SDL_MOUSEMOTION:
             if (e.motion.state == 1)
             {
-              mouseMoveEvents.push_back({e.motion.xrel, e.motion.yrel});
+              mouseMoveEvents.push_back({ e.motion.xrel, e.motion.yrel });
             }
             else if (e.motion.state == 4)
             {
@@ -55,7 +55,7 @@ struct EventHandler
       }
 
       Sint32 y_scroll_delta = 0;
-      while (! wheelEvents.empty())
+      while (!wheelEvents.empty())
       {
         y_scroll_delta += wheelEvents.back();
         wheelEvents.pop_back();
@@ -67,8 +67,8 @@ struct EventHandler
         controller->yScroll(y_scroll_delta, x, y);
       }
 
-      MouseMove mouse_move_delta = {0, 0};
-      while (! mouseMoveEvents.empty())
+      MouseMove mouse_move_delta = { 0, 0 };
+      while (!mouseMoveEvents.empty())
       {
         mouse_move_delta.x += mouseMoveEvents.back().x;
         mouse_move_delta.y += mouseMoveEvents.back().y;
@@ -76,10 +76,8 @@ struct EventHandler
       }
       if (mouse_move_delta.x != mouse_move_delta.y != 0)
         controller->buttonLeftDrag(mouse_move_delta);
-
     }
   }
-
 
   RenderingController* controller;
   std::deque<MouseMove> mouseMoveEvents;
