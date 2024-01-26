@@ -1,5 +1,5 @@
 #include "entities.hpp"
-#include "calendars.hpp"
+#include "resource_mgr.hpp"
 
 #if 0
 #include "doctest/doctest.h"
@@ -21,65 +21,61 @@ TEST_CASE("testing entities")
 }
 #endif
 
+namespace tl
+{
+
 Entity::Entity(std::string _name)
-    : name(std::move(_name))
-    , id(ids++)
+  : name(std::move(_name))
+  , id(ids++)
 {
     std::cout << "Creating " << name << ", id: " << ids - 1 << "\n";
 }
 
 Entity::Entity(std::string _name, int _start, int _end)
-    : name(std::move(_name))
-    , start_year(_start)
-    , end_year(_end)
-    , id(ids++)
+  : name(std::move(_name))
+  , start_year(_start)
+  , end_year(_end)
+  , id(ids++)
 {
     // birth before death, right?
     assert(start_year <= end_year);
 }
 
-Entity::~Entity()
+Entity::~Entity() { std::cout << "DTOR '" << name << "'\n"; }
+
+Entity::Property
+operator|(Entity::Property lhs, Entity::Property rhs)
 {
-    std::cout << "DTOR '" << name <<"'\n";
+    return static_cast<Entity::Property>(static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs));
 }
 
-EntitiesSingleton&
-EntitiesSingleton::instance()
+Entity::Property
+operator&(Entity::Property lhs, Entity::Property rhs)
 {
-    static EntitiesSingleton instance;
-    return instance;
+    return static_cast<Entity::Property>(
+      static_cast<std::underlying_type<Entity::Property>::type>(lhs) &
+      static_cast<std::underlying_type<Entity::Property>::type>(rhs));
 }
 
-Entity::property
-operator|(Entity::property lhs, Entity::property rhs)
+Entity::Property
+operator|=(Entity::Property& lhs, Entity::Property rhs)
 {
-    return static_cast<Entity::property>(static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs));
-}
-
-Entity::property operator&(Entity::property lhs, Entity::property rhs)
-{
-    return static_cast<Entity::property>(static_cast<std::underlying_type<Entity::property>::type>(lhs) &
-                                         static_cast<std::underlying_type<Entity::property>::type>(rhs));
-}
-
-Entity::property
-operator|=(Entity::property& lhs, Entity::property rhs)
-{
-    lhs = static_cast<Entity::property>(static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs));
+    lhs = static_cast<Entity::Property>(static_cast<unsigned>(lhs) | static_cast<unsigned>(rhs));
     return lhs;
 }
 
-Entity& operator""_e(const char* text, size_t)
+Entity&
+operator""_e(const char* text, size_t)
 {
     Entity* e = new Entity{ text };
-    e->properties |= Entity::property::hasNameAndId;
+    e->properties |= Entity::Property::Has_name_and_id;
     return *e;
 }
 
 Entity&
 operator|(Entity& e, int year)
 {
-    if ((bool) (e.properties & Entity::property::hasStartYear))
+    if ((bool)(e.properties & Entity::Property::Has_start_year))
     {
         // end year should be after start year
         assert(year > e.start_year);
@@ -89,13 +85,13 @@ operator|(Entity& e, int year)
         assert(year_limits(year) == year);
 
         e.end_year = year;
-        e.properties |= Entity::property::hasEndYear;
+        e.properties |= Entity::Property::Has_end_year;
         std::cout << "emplacing (" << e.name << ", " << e.start_year << ", " << e.end_year << ")\n";
-        EntitiesSingleton::instance().data.emplace_back(&e);
-//        Years::instance()->insert(&e);
+        Global::instance().data.emplace_back(&e);
+        //        Years::instance()->insert(&e);
         return e;
     }
-    else if ((bool) (e.properties & Entity::property::hasEndYear))
+    else if ((bool)(e.properties & Entity::Property::Has_end_year))
     {
         std::cout << "warning: tried to set even though all parameters are set\n";
         return e;
@@ -103,12 +99,15 @@ operator|(Entity& e, int year)
     else
     {
         e.start_year = year;
-        e.properties |= Entity::property::hasStartYear;
+        e.properties |= Entity::Property::Has_start_year;
         return e;
     }
 }
 
-Entities::Entities()
-  : entities{ &EntitiesSingleton::instance() }
-  , years{ &Years::instance() }
-{}
+Global&
+Global::instance()
+{
+    static Global instance;
+    return instance;
+}
+}

@@ -11,7 +11,8 @@
 // #ifndef __PRETTY_FUNCTION__
 // #define __PRETTY_FUNCTION__ __FUNCSIG__
 // #endif
-
+namespace tl
+{
 static size_t ids = 0;
 
 struct Dimensions
@@ -30,42 +31,30 @@ struct Entity
 
     ~Entity();
 
-    enum class property : unsigned
+    enum class Property : unsigned
     {
-        none = 0x0,
-        hasNameAndId = 0x1,
-        hasStartYear = 0x2,
-        hasEndYear = 0x4
+        None = 0x0,
+        Has_name_and_id = 0x1,
+        Has_start_year = 0x2,
+        Has_end_year = 0x4
     };
 
     const std::string name;
     const size_t id;
     int start_year = 0;
     int end_year = 0;
-    property properties = property::none;
+    Property properties = Property::None;
 
     Dimensions bounds;
     Entity* parent = nullptr;
 };
-///////////////////////////
-class EntitiesSingleton
-{
-    EntitiesSingleton() = default;
-
-  public:
-    ~EntitiesSingleton() { std::cout << "DTOR " << __PRETTY_FUNCTION__ << "\n"; }
-
-    static EntitiesSingleton& instance();
-
-    std::vector<std::unique_ptr<Entity>> data;
-};
 
 ///////////////////////////
-Entity::property operator|(Entity::property lhs, Entity::property rhs);
+Entity::Property operator|(Entity::Property lhs, Entity::Property rhs);
 
-Entity::property operator&(Entity::property lhs, Entity::property rhs);
+Entity::Property operator&(Entity::Property lhs, Entity::Property rhs);
 
-Entity::property operator|=(Entity::property& lhs, Entity::property rhs);
+Entity::Property operator|=(Entity::Property& lhs, Entity::Property rhs);
 
 /**
  * Creates an Entity object in the heap (new Entity) and
@@ -89,21 +78,6 @@ Entity& operator""_e(const char* text, size_t);
  */
 Entity& operator|(Entity& e, int year);
 
-struct Years;
-
-struct Entities
-{
-    /**
-     * RAII for Singleton to invoke its child objects' DTORs upon exiting
-     */
-    Entities();
-
-    ~Entities() = default;
-
-    EntitiesSingleton* entities;
-    Years* years;
-};
-
 template<typename>
 void
 populate_entities_test()
@@ -115,6 +89,7 @@ populate_entities_test()
     "Macedonia"_e | -808 | -168;
     "Minna the Great"_e | -3200 | 2019;
 
-    //    for (auto& e : EntitiesSingleton::instance()->data)
+    //    for (auto& e : Global::instance()->data)
     //        years.insert(e.get());
+}
 }

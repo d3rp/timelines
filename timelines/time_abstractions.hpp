@@ -12,9 +12,9 @@
 
 #include <SDL.h>
 
-//#include <emscripten.h>
+// #include <emscripten.h>
 
-//#define SDL_MAIN_HANDLED
+// #define SDL_MAIN_HANDLED
 
 #include "calendars.hpp"
 #include "details/utilities.h"
@@ -22,48 +22,39 @@
 #include "globals.hpp"
 #include "time_abstractions.hpp"
 
+
+namespace tl
+{
+
 struct YearRange
 {
-  int start = 0;
-  int end = 0;
+    int start = 0;
+    int end = 0;
+};
 
-  static YearRange new_relative_year_range(Sint32 xrel, YearRange* yrRange, int_pixels_t relativeMax = screen_w)
-  {
-    return newRelativeYearRange(xrel, yrRange->start, yrRange->end, relativeMax);
-  }
+static YearRange new_relative_year_range(const Sint32 xrel,
+                        const YearRange* year_range,
+                        const int_pixels_t relative_max = screen_w)
+{
+    float scale = (float)(year_range->end - year_range->start) / relative_max;
+    int scaled_x = xrel * scale;
+    return { year_range->start+ scaled_x, year_range->end + scaled_x };
+}
 
-  static YearRange
-  newRelativeYearRange(Sint32 xrel, int yearStart, int yearEnd, int_pixels_t relativeMax = screen_w)
-  {
-    float xScale = (float)(yearEnd - yearStart) / relativeMax;
-    int scaledRelativeX = xrel * xScale;
-    return { yearStart + scaledRelativeX, yearEnd + scaledRelativeX };
-  }
-
-  static YearRange new_scaled_year_range(Sint32 value,
-                     YearRange* yrRange,
-                     int_pixels_t midX = (screen_w / 2),
-                     int_pixels_t relativeMax = screen_w)
-  {
-    return newScaledYearRange(value, yrRange->start, yrRange->end, midX, relativeMax);
-  }
-
-  static YearRange
-  newScaledYearRange(Sint32 value,
-                     int yearStart,
-                     int yearEnd,
-                     int midX = (screen_w / 2),
-                     int_pixels_t relativeMax = screen_w)
-  {
-    float midPoint = 1.0f - ((float)midX / relativeMax);
-    constexpr float scaleCoeff = 1e-2f;
-    const float timescale = 1.0 - limit(-0.9f, 0.9f, scaleCoeff * (float)value);
-    const float start = yearStart;
-    const float mid = (yearStart + yearEnd) * midPoint;
-    const float end = yearEnd;
+static YearRange new_scaled_year_range(const Sint32 value,
+                      const YearRange* year_range,
+                      const int_pixels_t mid_x = (screen_w / 2),
+                      const int_pixels_t relative_max = screen_w)
+{
+    const float mid_point = 1.0f - ((float)mid_x / relative_max);
+    constexpr float scale = 1e-2f;
+    const float timescale = 1.0 - util::limit(-0.9f, 0.9f, scale * (float)value);
+    const float start = year_range->start;
+    const float mid = (year_range->start + year_range->end) * mid_point;
+    const float end = year_range->end;
 
     const int newStart = year_limits((int)(((start - mid) * timescale) + mid));
     const int newEnd = year_limits((int)(((end - mid) * timescale) + mid));
     return { newStart, newEnd };
-  }
-};
+}
+}

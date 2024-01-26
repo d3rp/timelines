@@ -1,5 +1,6 @@
 #include "utilities.h"
-
+namespace util
+{
 size_t
 length(const char* cstr)
 {
@@ -9,4 +10,5 @@ length(const char* cstr)
         c = cstr[_length];
 
     return _length;
+}
 }

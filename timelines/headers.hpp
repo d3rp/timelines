@@ -1,10 +1,10 @@
 #pragma once
 
-#include "globals.hpp"
-#include "dot.hpp"
-#include "details/utilities.h"
-#include "entities.hpp"
 #include "calendars.hpp"
-#include "time_abstractions.hpp"
-#include "events.hpp"
+#include "details/events.hpp"
+#include "details/utilities.h"
+#include "dot.hpp"
+#include "entities.hpp"
+#include "globals.hpp"
 #include "rendering.hpp"
+#include "time_abstractions.hpp"

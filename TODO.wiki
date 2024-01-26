@@ -1,0 +1,12 @@
+- [ ] time/entity parser
+  - [ ] fix doctest
+  - [ ] hook up cpr
+  - [ ] requests to json (or csv)
+  - [ ] parse into entities
+- [ ] refactorings
+  - [ ] free functions to reduce copypaste
+- [ ] helpers
+  - [ ] constexpr colours
+  - [ ] nesting tiler
+- [ ] cool stuff
+  - [ ] LLM to figure out what is event-entity data from crap

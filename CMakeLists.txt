@@ -4,7 +4,14 @@ project(main)
 aux_source_directory(timelines SRC_LIST)
 aux_source_directory(timelines/details DETAILS_SRC_LIST)
 
-add_executable(${PROJECT_NAME} ${SRC_LIST} ${DETAILS_SRC_LIST} timelines/headers.hpp timelines/details/csv/csv.h timelines/graphics.hpp)
+add_executable(${PROJECT_NAME}
+        ${SRC_LIST}
+        ${DETAILS_SRC_LIST}
+        timelines/headers.hpp
+        timelines/details/csv/csv.h
+        timelines/details/graphics.hpp
+        timelines/details/graphics.hpp
+        timelines/resource_mgr.hpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 # C++17

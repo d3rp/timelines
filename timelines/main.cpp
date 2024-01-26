@@ -1,17 +1,10 @@
 // #include "test_runner.h"
 #include "details/csv/csv.h"
-#include "events.hpp"
+#include "details/events.hpp"
 #include "rendering.hpp"
 #include "time_abstractions.hpp"
 
 #include <filesystem>
-// std::path projectPath()
-//{
-// auto basepath = std::filesystem::path(std::string(SDL_GetBasePath()));
-// auto project_path =  basepath.parent_path().parent_path();
-
-// return project_path;
-//}
 
 int
 main(int argc, char** argv)
@@ -39,8 +32,8 @@ main(int argc, char** argv)
     int client_stuff_return_code = 0;
 #endif
 #ifndef TESTS_ONLY
-    Entities sc_e;
-    ScopedGraphics sc_g;
+    using namespace tl;
+    ScopedGraphics sc_g(screen_w, screen_h);
 
     // path to csv
     auto basepath = std::filesystem::path(std::string(SDL_GetBasePath()));
@@ -64,13 +57,13 @@ main(int argc, char** argv)
     Renderer* r1 = new Horizontal();
     r1->year_range.start = -430;
     r1->year_range.end = 0;
-    r1->render_range(EntitiesSingleton::instance().data, &r1->year_range);
+    r1->render_range(Global::instance().data, &r1->year_range);
     controller.renderer_container.emplace_back(r1);
 
     Renderer* r0 = new Vertical();
     r0->year_range.start = -430;
     r0->year_range.end = 0;
-    r0->render_range(EntitiesSingleton::instance().data, &r0->year_range);
+    r0->render_range(Global::instance().data, &r0->year_range);
     controller.renderer_container.emplace_back(r0);
  
     controller.renderer = controller.renderer_container.back().get();
