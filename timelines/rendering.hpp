@@ -78,6 +78,10 @@ struct Renderer
 
     virtual void render_range(std::vector<EntityPtr>& _entities, YearRange* yrRange) = 0;
 
+    virtual void render_entity_box(SDL_Rect& r, Entity* e, uint8_t borderColour, uint8_t fillColour) const = 0;
+
+    virtual void draw_grid(int year_start, int year_end, const double scale_x) const {};
+
     // TODO : consider other options, state in interface..
     YearRange year_range;
     std::vector<Uint8> lanes;
@@ -145,9 +149,8 @@ struct RenderingController
     Renderer* renderer = nullptr;
 };
 
-class Vertical : public Renderer
+struct Vertical : Renderer
 {
-  public:
     Vertical()
       : font_size(36)
       , font{ get_title_font(font_size) }
@@ -219,17 +222,21 @@ class Vertical : public Renderer
             const size_t lane_index =
               lane(max_entities_in_interval, entity_start_year, entity_end_year);
 
-            e->bounds.x = 10 + (w * lane_index);
-            e->bounds.y = rect_start_y * scale_y;
-            e->bounds.h = (rect_end_y - rect_start_y) * scale_y;
-            e->bounds.w = w;
+//            e->bounds.x = 10 + (w * lane_index);
+//            e->bounds.y = rect_start_y * scale_y;
+//            e->bounds.h = (rect_end_y - rect_start_y) * scale_y;
+//            e->bounds.w = w;
+
+//            r.x = e->bounds.x;
+//            r.y = e->bounds.y;
+//            r.w = e->bounds.w;
+//            r.h = e->bounds.h;
 
             SDL_Rect r;
-            r.x = e->bounds.x;
-            r.y = e->bounds.y;
-            r.w = e->bounds.w;
-            r.h = e->bounds.h;
-
+            r.x = 10 + (w * lane_index);
+            r.y = rect_start_y * scale_y;
+            r.h = (rect_end_y - rect_start_y) * scale_y;
+            r.w = w;
             const Uint8 colour_fill = e->id * colour_incr;
             const Uint8 colour_border = colour_fill + colour_incr;
 
@@ -255,7 +262,7 @@ class Vertical : public Renderer
         //        SDL_Delay(50);
     }
 
-    void render_entity_box(SDL_Rect& r, Entity* e, uint8_t colour_border, uint8_t colour_fill) const
+    void render_entity_box(SDL_Rect& r, Entity* e, uint8_t colour_border, uint8_t colour_fill) const override
     {
         // outline
         SDL_SetRenderDrawColor(g.ren, 0xFF, 0xFF, 0xFF, 0x20);
@@ -274,9 +281,8 @@ class Vertical : public Renderer
     TTF_Font* font;
 };
 
-class Horizontal : public Renderer
+struct Horizontal : Renderer
 {
-  public:
     Horizontal()
       : font_size(36)
       , font{ get_title_font(font_size) }
@@ -297,7 +303,7 @@ class Horizontal : public Renderer
             TTF_CloseFont(font);
     }
 
-    void draw_grid(int year_start, int year_end, const double scale_x) const
+    void draw_grid(int year_start, int year_end, const double scale_x) const override
     {
         const int interval = year_end - year_start;
         int splits = interval / 8.0f;
@@ -392,7 +398,7 @@ class Horizontal : public Renderer
     }
 
     // TODO : probably can be refactored to a free function for both renderers
-    void render_entity_box(SDL_Rect& r, Entity* e, uint8_t borderColour, uint8_t fillColour) const
+    void render_entity_box(SDL_Rect& r, Entity* e, uint8_t borderColour, uint8_t fillColour) const override
     {
         // fill
         SDL_SetRenderDrawColor(g.ren,
@@ -431,4 +437,70 @@ class Horizontal : public Renderer
     size_t font_size;
     TTF_Font* font;
 };
+
+// render_range(..., auto max_h = screen_h - 80, screen_h)
+static void
+render_range(Renderer& renderer, std::vector<Renderer::EntityPtr>& _entities, YearRange* year_range, int max_dim, int scale_nom)
+{
+    const auto render_start = year_range->start;
+    const auto render_end = year_range->end;
+
+    //    std::cout << "rendering time frame [" << render_start << ", " << render_end << "]\n";
+    assert(render_start <= render_end);
+
+    std::vector<Entity*> selected_entities = renderer.select_from(_entities);
+
+    auto max_entities_in_interval = renderer.entities_in_interval(render_start, render_end);
+    if (max_entities_in_interval == 0)
+        return;
+
+    auto h = max_dim / max_entities_in_interval;
+
+    clear();
+
+    assert(_entities.size() > 0);
+    Uint8 colour_incr = 255 / _entities.size();
+
+    const auto render_start_pos = year_to_index(render_start);
+    const auto render_end_pos = year_to_index(render_end);
+    const auto interval = util::limit<int>(0, MAX_BINS, render_end_pos - render_start_pos);
+    const double scale = scale_nom / (double)interval;
+
+    std::fill(renderer.lanes.begin(), renderer.lanes.end(), std::numeric_limits<uint8_t>::max());
+
+    for (auto& e : selected_entities)
+    {
+        //            std::cout << "Entity found, rendering..\n";
+
+        renderer.draw_grid(render_start, render_end, scale);
+
+        const int entity_start = e->start_year;
+        const int entity_end = e->end_year;
+
+        auto bound_start = std::max(entity_start, render_start);
+        const int rect_start_x = year_to_index(bound_start) - render_start_pos;
+
+        auto bound_end = std::min(entity_end, render_end);
+        const int rect_end_x = year_to_index(bound_end) - render_start_pos;
+
+        // non const part
+        const size_t lane_idx = renderer.lane(max_entities_in_interval, entity_start, entity_end);
+
+        // TODO : method or lambda call
+        SDL_Rect r;
+        r.x = rect_start_x * scale;
+        r.y = 10 + (h * lane_idx);
+        r.w = (rect_end_x - rect_start_x) * scale;
+        r.h = h;
+
+        const Uint8 fillColour = e->id * colour_incr;
+        const Uint8 borderColour = fillColour + colour_incr;
+
+        renderer.render_entity_box(r, e, borderColour, fillColour);
+    }
+
+    SDL_RenderPresent(g.ren);
+    // TODO : probably due to scope
+    //        SDL_Delay(50);
+}
 }
